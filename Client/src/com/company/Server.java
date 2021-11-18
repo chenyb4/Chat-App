@@ -4,12 +4,13 @@ import java.net.*;
 import java.io.*;
 public class Server {
 
-    private ServerSocket serverSocket;
+    /*private ServerSocket serverSocket;
     private Socket clientSocket;
     private PrintWriter out;
     private BufferedReader in;
 
     public void start(int port) throws IOException {
+        System.out.println("Server started with port: "+port);
         serverSocket = new ServerSocket(port);
         clientSocket = serverSocket.accept();
         out = new PrintWriter(clientSocket.getOutputStream(), true);
@@ -27,5 +28,5 @@ public class Server {
         out.close();
         clientSocket.close();
         serverSocket.close();
-    }
+    }*/
 }
