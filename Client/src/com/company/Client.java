@@ -11,8 +11,6 @@ public class Client {
     private PrintWriter out;
     private BufferedReader in;
     private String userName = "";
-    //private volatile boolean active = true;
-    //private List <String> allMessages = new ArrayList<>();
 
     public void startConnection (String ip, int port) throws IOException {
         System.out.println();
@@ -24,64 +22,91 @@ public class Client {
         System.out.println();
     }
 
-    protected void sendMessage (String msg) {
+    /**
+     * Send a message to a server with a particular command
+     * @param msg to be sent to the server
+     */
+
+    private void sendMessage (String msg) {
         //Thread for sending messages
         Thread thread = new Thread(() -> {
             out.println(msg);
             out.flush(); // The flush method sends the messages from the print writer buffer to client.
-            //while (active) Thread.onSpinWait();
         });
         thread.start();
         try {
-            thread.join();
+            thread.join(); //Wait the thread to finish
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
         readMessages(); // Get the response from the server
     }
 
-    protected void readMessages() {
+    /**
+     * Read the messages from the server
+     */
+
+    private void readMessages() {
         //Thread for reading messages from the server
         Thread thread = new Thread(() -> {
             try {
                 System.out.println("<< " + in.readLine()); // Read the response from the server
                 System.out.println();
-                //while (active) Thread.onSpinWait();
             } catch (IOException ioe) {
                 System.err.println(ioe.getMessage());
             }
         });
         thread.start();
         try {
-            thread.join();
+            thread.join(); //Wait the thread to finish
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
+    /**
+     * Connect to the server with a specific username, cannot be null or empty
+     * @param userName of the client
+     */
+
     public void connectWithUserName (String userName) {
         if (userName != null && !userName.equals("")) {
             this.userName = userName;
             sendMessage("CONN "+userName+"\n");
-        } else {
+        }
+        else {
             throw new IllegalArgumentException("Invalid username!");
         }
     }
 
+    /**
+     * send a broadcast message to the server (to all available users)
+     * but the message should not be null and the user is logged in
+     * @param msg to be sent
+     */
+
     public void sendBroadcastMessage (String msg) {
-        if (msg == null || msg.equals("")) {
+        if (userName.equals("")) {
+            throw new IllegalStateException("Login first!");
+        }
+        else if (msg == null || msg.equals("")) {
             throw new IllegalArgumentException("Invalid message!");
-        } else if (userName.equals("")) {
-            throw new IllegalStateException("Not logged in!");
-        } else {
+        }
+        else {
             sendMessage("BCST "+msg+"\n");
         }
     }
 
+    /**
+     * Close the connection to the server along with PrintWriter and BufferedReader
+     * @throws IOException caused by failed or interrupted io operations
+     */
+
     public void stopConnection () throws IOException {
         if (userName.equals("")){
-            throw new IllegalStateException("Please login first!");
-        } else {
+            throw new IllegalStateException("Login first!");
+        }
+        else {
             sendMessage("QUIT\n");
             //active = false;
             in.close();
@@ -90,14 +115,22 @@ public class Client {
         }
     }
 
-    //This will get the broadcast message
-    //Todo: fix errors when there is no message
+    /**
+     * Check if the user is logged in first and then if there are messages,
+     * if yes then system will print it to console
+     * @throws IOException caused by failed or interrupted io operations
+     */
+
     public void getMessages () throws IOException {
-        if (in.readLine() != null && !in.readLine().equals("")){
-            System.out.println("<< "+in.readLine());
-            System.out.println();
-        } else {
+        boolean temp = in.ready();
+        if (userName.equals("")) {
+            throw new IllegalStateException("Login first!");
+        }
+        else if (!temp) {
             System.out.println("No messages!");
+        }
+        else if (temp){
+            System.out.println(in.readLine());
         }
     }
 }
