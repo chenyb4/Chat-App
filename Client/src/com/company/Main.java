@@ -1,11 +1,9 @@
 package com.company;
 
-import org.junit.Test;
+import org.junit.Assert;
 
 import java.io.IOException;
 import java.util.Scanner;
-
-import static org.junit.Assert.assertEquals;
 
 public class Main {
 
@@ -16,18 +14,23 @@ public class Main {
         } catch (IOException e) {
             e.printStackTrace();
         }*/
-
         Client client  = new Client();
-        client.startConnection("127.0.0.1",1337);
-        try {
+        String ip = "127.0.0.1";
+        int port = 1337;
+
+        client.startConnection(ip,port);
+
+       /* try {
             Thread.sleep(500);
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }
-        userInterface(client);
+        }*/
+
+        userMenu(client);
     }
 
-    public static void userInterface (Client client) throws IOException {
+    public static void userMenu(Client client) throws IOException {
+        boolean menu = true;
         int userInput = -1;
         String userName = "";
         String message = "";
@@ -45,23 +48,40 @@ public class Main {
 
             switch (userInput) {
                 case 1 -> {
-                    System.out.print("Please enter your username: ");
+                    System.out.print("Please enter your username: >> ");
                     userName = readString();
-                    client.connectWithUserName(userName);
-                    System.out.println();
+                    try {
+                        client.connectWithUserName(userName);
+                    } catch (IllegalArgumentException iae) {
+                        System.err.println(iae.getMessage());
+                        System.out.println();
+                    }
                 }
                 case 2 -> {
-                    System.out.print("Please enter your message: ");
+                    System.out.print("Please enter your message: >> ");
                     message = readString();
-                    client.sendBroadcastMessage(message);
-                    System.out.println();
+                    try {
+                        client.sendBroadcastMessage(message);
+                    } catch (IllegalArgumentException | IllegalStateException e) {
+                        System.err.println(e.getMessage());
+                        System.out.println();
+                    }
                 }
+                case 3 -> System.out.println("To be implemented!");
                 case 4 -> client.getMessages();
-                case 0 -> client.stopConnection();
+                case 0 -> {
+                    try {
+                        client.stopConnection();
+                        menu = false;
+                    } catch (IllegalStateException ise) {
+                        System.err.println(ise.getMessage());
+                        System.out.println();
+                    }
+                }
                 default -> System.err.println("Error, wrong input!");
             }
 
-        } while (userInput != 0);
+        } while (menu);
 
     }
 
