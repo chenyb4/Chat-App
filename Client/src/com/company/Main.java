@@ -5,9 +5,13 @@ import java.util.Scanner;
 
 public class Main {
 
+
+    static boolean isLoggedIn=false;
     public static void main(String[] args) throws IOException {
         String ip = "127.0.0.1";
         int port = 1337;
+
+
 
         /*Server server = new Server();
         try {
@@ -19,6 +23,8 @@ public class Main {
         Client client  = new Client();
         client.startConnection(ip,port);
         userMenu(client);
+
+
     }
 
     public static void userMenu(Client client) throws IOException {
@@ -28,7 +34,18 @@ public class Main {
         String message = "";
         showMenu();
 
+
+
         while (show){
+
+
+            if(isLoggedIn==true){
+                if(client.in.readLine().equals("PING")){
+                    client.sendPong();
+                }
+            }
+
+
             userInput = readString();
             switch (userInput) {
                 case "1" -> {
@@ -36,6 +53,7 @@ public class Main {
                     userName = readString();
                     try {
                         client.connectWithUserName(userName);
+                        isLoggedIn=true;
                     }   catch (IllegalArgumentException iae) {
                         System.err.println(iae.getMessage());
                         System.out.println();
