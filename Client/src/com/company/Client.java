@@ -9,7 +9,7 @@ public class Client {
 
     private Socket clientSocket;
     private PrintWriter out;
-    private BufferedReader in;
+    public BufferedReader in;
     private String userName = "";
 
     public void startConnection (String ip, int port) throws IOException {
@@ -133,4 +133,23 @@ public class Client {
             System.out.println(in.readLine());
         }
     }
+
+   /* public boolean isPingReceived () throws IOException {
+        boolean temp = in.ready();
+        if (temp){
+
+        }
+        return false;
+    }*/
+
+
+    /**
+     * sends pong to the server
+     */
+    public void sendPong() {
+        //no condition to check, only logged-in users will receive ping from server
+        sendMessage("PONG"+"\n");
+    }
+
+
 }
