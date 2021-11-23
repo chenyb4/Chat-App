@@ -5,8 +5,6 @@ import java.util.Scanner;
 
 public class Main {
 
-
-    static boolean isLoggedIn=false;
     public static void main(String[] args) throws IOException {
         String ip = "127.0.0.1";
         int port = 1337;
@@ -117,11 +115,28 @@ public class Main {
         showMenu();
 
         while (show) {
-
-            boolean messageReceivedFromTheServer = client.getIn().ready();
-            if (messageReceivedFromTheServer){
-                System.out.println(client.getIn().readLine());
-            }
+            Thread t1 = new Thread(() -> {
+                while (true){
+                    boolean messageReceivedFromTheServer = false;
+                    try {
+                        messageReceivedFromTheServer = client.getIn().ready();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    if (messageReceivedFromTheServer){
+                        try {
+                            if(client.getIn().readLine().equals("PING")){
+                                client.sendPong();
+                            } else {
+                                System.out.println(client.getIn().readLine());
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            });
+            t1.start();
 
             userInput = readString();
 
