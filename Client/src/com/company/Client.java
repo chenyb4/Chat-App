@@ -11,14 +11,15 @@ public class Client {
     private PrintWriter out;
     private BufferedReader in;
     private String userName = "";
+    private boolean isActive = false;
 
     public void startConnection (String ip, int port) throws IOException {
         System.out.println();
-        System.out.println("Connection started with ip: "+ip+ " to port: "+port);
+        //System.out.println("Connection started with ip: "+ip+ " to port: "+port);
         clientSocket = new Socket(ip, port);
         in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         out = new PrintWriter(clientSocket.getOutputStream());
-        System.out.println(in.readLine()); // Read the response from the server
+        //System.out.println(in.readLine()); // Read the response from the server
         System.out.println();
     }
 
@@ -29,24 +30,25 @@ public class Client {
 
     private void sendMessage (String msg) {
         //Thread for sending messages
-        Thread thread = new Thread(() -> {
-            out.println(msg);
-            out.flush(); // The flush method sends the messages from the print writer buffer to client.
+        /*Thread thread = new Thread(() -> {
+
         });
         thread.start();
         try {
             thread.join(); //Wait the thread to finish
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }
-        readMessages(); // Get the response from the server
+        }*/
+        out.println(msg);
+        out.flush(); // The flush method sends the messages from the print writer buffer to client.
+        //readMessages(); // Get the response from the server
     }
 
     /**
      * Read the messages from the server
      */
 
-    private void readMessages() {
+    /*private void readMessages() {
         //Thread for reading messages from the server
         Thread thread = new Thread(() -> {
             try {
@@ -62,7 +64,7 @@ public class Client {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-    }
+    }*/
 
     /**
      * Connect to the server with a specific username, cannot be null or empty
@@ -72,6 +74,7 @@ public class Client {
     public void connectWithUserName (String userName) {
         if (userName != null && !userName.equals("")) {
             this.userName = userName;
+            isActive = true;
             sendMessage("CONN "+userName+"\n");
         }
         else {
@@ -103,15 +106,11 @@ public class Client {
      */
 
     public void stopConnection () throws IOException {
-        if (userName.equals("")){
-            throw new IllegalStateException("Login first!");
-        }
-        else {
-            sendMessage("QUIT\n");
-            in.close();
-            out.close();
-            clientSocket.close();
-        }
+        isActive = false;
+        sendMessage("QUIT\n");
+        in.close();
+        out.close();
+        clientSocket.close();
     }
 
     /**
@@ -120,7 +119,7 @@ public class Client {
      * @throws IOException caused by failed or interrupted io operations
      */
 
-    public void getMessages () throws IOException {
+    /*public void getMessages () throws IOException {
         boolean temp = in.ready();
         if (userName.equals("")) {
             throw new IllegalStateException("Login first!");
@@ -131,7 +130,7 @@ public class Client {
         else if (temp){
             System.out.println(in.readLine());
         }
-    }
+    }*/
 
    /* public boolean isPingReceived () throws IOException {
         boolean temp = in.ready();
@@ -153,4 +152,9 @@ public class Client {
     public BufferedReader getIn() {
         return in;
     }
+
+    public boolean isActive() {
+        return isActive;
+    }
+
 }
