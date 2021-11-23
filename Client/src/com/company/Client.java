@@ -18,7 +18,7 @@ public class Client {
         clientSocket = new Socket(ip, port);
         in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         out = new PrintWriter(clientSocket.getOutputStream());
-        System.out.println("<< "+in.readLine()); // Read the response from the server
+        System.out.println(in.readLine()); // Read the response from the server
         System.out.println();
     }
 
@@ -50,7 +50,7 @@ public class Client {
         //Thread for reading messages from the server
         Thread thread = new Thread(() -> {
             try {
-                System.out.println("<< " + in.readLine()); // Read the response from the server
+                System.out.println(in.readLine()); // Read the response from the server
                 System.out.println();
             } catch (IOException ioe) {
                 System.err.println(ioe.getMessage());
@@ -108,7 +108,6 @@ public class Client {
         }
         else {
             sendMessage("QUIT\n");
-            //active = false;
             in.close();
             out.close();
             clientSocket.close();
