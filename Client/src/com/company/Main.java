@@ -22,12 +22,11 @@ public class Main {
 
         Client client  = new Client();
         client.startConnection(ip,port);
-        userMenu(client);
-
-
+        //userMenu(client);
+        chat(client);
     }
 
-    public static void userMenu(Client client) throws IOException {
+    /*public static void userMenu(Client client) throws IOException {
         boolean show = true;
         String userInput = "";
         String userName = "";
@@ -40,7 +39,7 @@ public class Main {
 
 
             if(isLoggedIn==true){
-                if(client.in.readLine().equals("PING")){
+                if(client.getIn().readLine().equals("PING")){
                     client.sendPong();
                 }
             }
@@ -90,18 +89,64 @@ public class Main {
                 default -> System.err.println("Error, wrong input!");
             }
         }
-    }
+    }*/
 
     public static void showMenu() {
-        System.out.println("Please select one of the commands below: ");
-        System.out.println("1) CONN: Connect to the server. (username) as a argument");
-        System.out.println("2) BCST: Send broadcast message to all of the connected users. (message as a argument)");
-        System.out.println("3) PONG: To be implemented later on...");
-        System.out.println("4) Read messages");
-        System.out.println("0) QUIT: Disconnect form the server");
-        System.out.println("?) Show this menu");
-        System.out.println();
-        System.out.print("Enter your choice: ");
+        System.out.println("Please enter your message and hit enter to send the message to other people!");
+        System.out.println("If you want to quit, please enter Q.");
+        System.out.println("If you want to send PONG, please enter P.");
+        System.out.println("If you want to see the menu again, please enter ?.");
+
+    }
+
+    public static void chat(Client client) throws IOException {
+        boolean show = true;
+        String userInput = "";
+        String userName = "";
+
+        System.out.print("Please enter your username: >> ");
+        try {
+            userName = readString();
+            client.connectWithUserName(userName);
+        }   catch (IllegalArgumentException iae) {
+            System.err.println(iae.getMessage());
+            System.out.println();
+        }
+
+        System.out.println("Welcome to the chat room, "+userName+"!");
+        showMenu();
+
+        while (show) {
+
+            boolean messageReceivedFromTheServer = client.getIn().ready();
+            if (messageReceivedFromTheServer){
+                System.out.println(client.getIn().readLine());
+            }
+
+            userInput = readString();
+
+            switch (userInput){
+                case "Q" -> {
+                    try {
+                        client.stopConnection();
+                        show = false;
+                    } catch (IllegalStateException ise) {
+                        System.err.println(ise.getMessage());
+                        System.out.println();
+                    }
+                }
+                case "P" -> client.sendPong();
+                case "?" -> showMenu();
+                default -> {
+                    try {
+                        client.sendBroadcastMessage(userInput);
+                    }   catch (IllegalArgumentException | IllegalStateException e) {
+                        System.err.println(e.getMessage());
+                        System.out.println();
+                    }
+                }
+            }
+        }
     }
 
     public static String readString() {

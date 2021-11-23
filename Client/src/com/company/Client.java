@@ -9,7 +9,7 @@ public class Client {
 
     private Socket clientSocket;
     private PrintWriter out;
-    public BufferedReader in;
+    private BufferedReader in;
     private String userName = "";
 
     public void startConnection (String ip, int port) throws IOException {
@@ -151,5 +151,7 @@ public class Client {
         sendMessage("PONG"+"\n");
     }
 
-
+    public BufferedReader getIn() {
+        return in;
+    }
 }
