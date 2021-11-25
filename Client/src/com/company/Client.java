@@ -29,42 +29,9 @@ public class Client {
      */
 
     private void sendMessage (String msg) {
-        //Thread for sending messages
-        /*Thread thread = new Thread(() -> {
-
-        });
-        thread.start();
-        try {
-            thread.join(); //Wait the thread to finish
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }*/
         out.println(msg);
         out.flush(); // The flush method sends the messages from the print writer buffer to client.
-        //readMessages(); // Get the response from the server
     }
-
-    /**
-     * Read the messages from the server
-     */
-
-    /*private void readMessages() {
-        //Thread for reading messages from the server
-        Thread thread = new Thread(() -> {
-            try {
-                System.out.println(in.readLine()); // Read the response from the server
-                System.out.println();
-            } catch (IOException ioe) {
-                System.err.println(ioe.getMessage());
-            }
-        });
-        thread.start();
-        try {
-            thread.join(); //Wait the thread to finish
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }*/
 
     /**
      * Connect to the server with a specific username, cannot be null or empty
@@ -112,34 +79,6 @@ public class Client {
         out.close();
         clientSocket.close();
     }
-
-    /**
-     * Check if the user is logged in first and then if there are messages,
-     * if yes then system will print it to console
-     * @throws IOException caused by failed or interrupted io operations
-     */
-
-    /*public void getMessages () throws IOException {
-        boolean temp = in.ready();
-        if (userName.equals("")) {
-            throw new IllegalStateException("Login first!");
-        }
-        else if (!temp) {
-            System.out.println("No messages!");
-        }
-        else if (temp){
-            System.out.println(in.readLine());
-        }
-    }*/
-
-   /* public boolean isPingReceived () throws IOException {
-        boolean temp = in.ready();
-        if (temp){
-
-        }
-        return false;
-    }*/
-
 
     /**
      * sends pong to the server
