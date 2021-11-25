@@ -44,7 +44,7 @@ public class Main {
                                 client.sendPong();
                             } else {
                                 // TODO: 23-Nov-21 Convert the message received from the server to a user friendly message
-                                System.out.println(temp);
+                                System.out.println(Helper.convertMessageAndPrint(temp));
                             }
                         }
                     }
@@ -63,7 +63,7 @@ public class Main {
                     case "Q" -> {
                         try {
                             client.stopConnection();
-                            System.out.println("Goodbye");
+                            System.out.println("You have exited the chat room.");
                         } catch (IllegalStateException | IOException ise) {
                             System.err.println(ise.getMessage());
                             System.out.println();
