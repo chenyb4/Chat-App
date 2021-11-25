@@ -18,99 +18,19 @@ public class Main {
 
         Client client  = new Client();
         client.startConnection(ip,port);
-        //userMenu(client);
         chat(client);
     }
 
-    /*public static void userMenu(Client client) throws IOException {
-        boolean show = true;
-        String userInput = "";
-        String userName = "";
-        String message = "";
-        showMenu();
-
-
-
-        while (show){
-
-
-            if(isLoggedIn==true){
-                if(client.getIn().readLine().equals("PING")){
-                    client.sendPong();
-                }
-            }
-
-
-            userInput = readString();
-            switch (userInput) {
-                case "1" -> {
-                    System.out.print("Please enter your username: >> ");
-                    userName = readString();
-                    try {
-                        client.connectWithUserName(userName);
-                        isLoggedIn=true;
-                    }   catch (IllegalArgumentException iae) {
-                        System.err.println(iae.getMessage());
-                        System.out.println();
-                    }
-                }
-                case "2" -> {
-                    System.out.print("Please enter your message: >> ");
-                    message = readString();
-                    try {
-                        client.sendBroadcastMessage(message);
-                    }   catch (IllegalArgumentException | IllegalStateException e) {
-                        System.err.println(e.getMessage());
-                        System.out.println();
-                    }
-                }
-                case "3" -> System.out.println("To be implemented!");
-                case "4" -> {
-                    try {
-                        client.getMessages();
-                    } catch (IllegalArgumentException | IllegalStateException e){
-                        System.err.println(e.getMessage());
-                    }
-                }
-                case "0" -> {
-                    try {
-                        client.stopConnection();
-                        show = false;
-                    } catch (IllegalStateException ise) {
-                        System.err.println(ise.getMessage());
-                        System.out.println();
-                    }
-                }
-                case "?" -> showMenu();
-                default -> System.err.println("Error, wrong input!");
-            }
-        }
-    }*/
-
-    public static void showMenu() {
+    public static void menu() {
         System.out.println("Please enter your message and hit enter to send the message to other people!");
         System.out.println("If you want to quit, please enter Q.");
         System.out.println("If you want to see the menu again, please enter ?.");
-
     }
 
-    public static void chat(Client client) throws IOException {
-        String userInput = "";
-        String userName = "";
-
-        System.out.print("Please enter your username: >> ");
-        try {
-            userName = readString();
-            client.connectWithUserName(userName);
-            //System.out.println(client.getIn().readLine());
-        }   catch (IllegalArgumentException iae) {
-            System.err.println(iae.getMessage());
-            System.out.println();
-        }
-
-        System.out.println("Welcome to the chat room, "+userName+"!");
-        showMenu();
-
+    public static void chat(Client client) {
+        login(client);
+        menu();
+        String pattern = "^[a-zA-Z][a-zA-Z0-9_]{3,14}$";
         //Thread for reading the messages from the server
         Thread t1 = new Thread(() -> {
             while (client.isActive()){
@@ -135,10 +55,11 @@ public class Main {
         });
         t1.start();
 
+        //Thread for sending messages to the server
         Thread t2 = new Thread(() -> {
             while (client.isActive()){
-                String input = readString();
-                switch (input){
+                String userInput = readString();
+                switch (userInput){
                     case "Q" -> {
                         try {
                             client.stopConnection();
@@ -148,11 +69,10 @@ public class Main {
                             System.out.println();
                         }
                     }
-                    case "P" -> client.sendPong();
-                    case "?" -> showMenu();
+                    case "?" -> menu();
                     default -> {
                         try {
-                            client.sendBroadcastMessage(input);
+                            client.sendBroadcastMessage(userInput);
                         }   catch (IllegalArgumentException | IllegalStateException e) {
                             System.err.println(e.getMessage());
                             System.out.println();
@@ -162,6 +82,20 @@ public class Main {
             }
         });
         t2.start();
+    }
+
+    public static void login (Client client) {
+        String userName = "";
+        System.out.print("Please enter your username: >> ");
+        try {
+            userName = readString();
+            client.connectWithUserName(userName);
+            //System.out.println(client.getIn().readLine());
+        }   catch (IllegalArgumentException iae) {
+            System.err.println(iae.getMessage());
+            System.out.println();
+        }
+        System.out.println("Welcome to the chat room, "+userName+"!");
     }
 
     public static String readString() {
