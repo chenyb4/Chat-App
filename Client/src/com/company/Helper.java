@@ -2,7 +2,7 @@ package com.company;
 
 public class Helper {
 
-    public static String convertMessageAndPrint(String m){
+    public static String convertMessage(String m){
         //String fullMessage="";
         String[] lineParts=m.split(" ");
 

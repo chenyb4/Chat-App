@@ -88,6 +88,8 @@ public class Client {
         sendMessage("PONG"+"\n");
     }
 
+
+    //getters
     public BufferedReader getIn() {
         return in;
     }
