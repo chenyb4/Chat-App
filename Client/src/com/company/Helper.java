@@ -6,9 +6,8 @@ public class Helper {
         //String fullMessage="";
         String[] lineParts=m.split(" ");
 
-
         if(m.contains("INFO")){
-            return "Welcome to the char server!!!";
+            return "Welcome to the chat server!!!";
         }else if(lineParts[0].equals("BCST")){
             //reveived broadcast message
             String name=lineParts[1];
@@ -43,14 +42,7 @@ public class Helper {
         }else if (lineParts[0].equals("ER00")){
             return "There is no such command. Please enter '?' to see the manual.";
         }
-
         return "";
-
-
-
-
-
-
     }
 
 

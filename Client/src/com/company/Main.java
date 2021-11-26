@@ -28,9 +28,16 @@ public class Main {
     }
 
     public static void chat(Client client) {
+
+        try {
+            String welcomeMessage = client.getIn().readLine();
+            System.out.println(Helper.convertMessageAndPrint(welcomeMessage));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         login(client);
-        menu();
-        String pattern = "^[a-zA-Z][a-zA-Z0-9_]{3,14}$";
+
         //Thread for reading the messages from the server
         Thread t1 = new Thread(() -> {
             while (client.isActive()){
@@ -43,7 +50,6 @@ public class Main {
                             if(temp.equals("PING")){
                                 client.sendPong();
                             } else {
-                                // TODO: 23-Nov-21 Convert the message received from the server to a user friendly message
                                 System.out.println(Helper.convertMessageAndPrint(temp));
                             }
                         }
@@ -54,6 +60,14 @@ public class Main {
             }
         });
         t1.start();
+
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        menu();
 
         //Thread for sending messages to the server
         Thread t2 = new Thread(() -> {
@@ -86,16 +100,17 @@ public class Main {
 
     public static void login (Client client) {
         String userName = "";
-        System.out.print("Please enter your username: >> ");
-        try {
-            userName = readString();
-            client.connectWithUserName(userName);
-            //System.out.println(client.getIn().readLine());
-        }   catch (IllegalArgumentException iae) {
-            System.err.println(iae.getMessage());
-            System.out.println();
+        while (!client.isActive()){
+            System.out.print("Please enter your username: >> ");
+            try {
+                userName = readString();
+                client.connectWithUserName(userName);
+                //System.out.println(client.getIn().readLine());
+            }   catch (IllegalArgumentException iae) {
+                System.err.println(iae.getMessage());
+                System.out.println();
+            }
         }
-        System.out.println("Welcome to the chat room, "+userName+"!");
     }
 
     public static String readString() {
