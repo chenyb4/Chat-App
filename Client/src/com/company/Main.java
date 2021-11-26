@@ -23,8 +23,8 @@ public class Main {
 
     public static void menu() {
         System.out.println("Please enter your message and hit enter to send the message to other people!");
-        System.out.println("If you want to quit, please enter Q.");
-        System.out.println("If you want to see the menu again, please enter ?.");
+        System.out.println("If you want to quit, please enter \"-Q\".");
+        System.out.println("If you want to see the menu again, please enter \"-?\".");
     }
 
     public static void chat(Client client) {
@@ -74,7 +74,7 @@ public class Main {
             while (client.isActive()){
                 String userInput = readString();
                 switch (userInput){
-                    case "Q" -> {
+                    case "-Q" -> {
                         try {
                             client.stopConnection();
                             System.out.println("You have exited the chat room.");
@@ -83,7 +83,7 @@ public class Main {
                             System.out.println();
                         }
                     }
-                    case "?" -> menu();
+                    case "-?" -> menu();
                     default -> {
                         try {
                             client.sendBroadcastMessage(userInput);
