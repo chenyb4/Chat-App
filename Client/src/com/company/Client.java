@@ -39,7 +39,7 @@ public class Client {
      */
 
     public void connectWithUserName (String userName) {
-        if (userName != null && !userName.equals("")) {
+        if (userName != null && userName.length() > 2) {
             this.userName = userName;
             isActive = true;
             sendMessage("CONN "+userName+"\n");
