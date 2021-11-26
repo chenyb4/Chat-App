@@ -31,7 +31,7 @@ public class Main {
 
         try {
             String welcomeMessage = client.getIn().readLine();
-            System.out.println(Helper.convertMessageAndPrint(welcomeMessage));
+            System.out.println(Helper.convertMessage(welcomeMessage));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -50,7 +50,7 @@ public class Main {
                             if(temp.equals("PING")){
                                 client.sendPong();
                             } else {
-                                System.out.println(Helper.convertMessageAndPrint(temp));
+                                System.out.println(Helper.convertMessage(temp));
                             }
                         }
                     }
