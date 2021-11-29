@@ -2,8 +2,12 @@ package com.company;
 
 import java.io.IOException;
 import java.util.Scanner;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class Main {
+
+    static boolean pingReceived = true;
 
     public static void main(String[] args) throws IOException {
         String ip = "127.0.0.1";
@@ -19,6 +23,24 @@ public class Main {
         Client client  = new Client();
         client.startConnection(ip,port);
         chat(client);
+
+        /*Timer timer1 = new Timer();
+        timer1.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    client.getClientSocket().getOutputStream().write(0);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    System.err.println("Something went wrong with the server!");
+                    try {
+                        client.stopConnection();
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }
+        },0,3000);*/
     }
 
     public static void menu() {
@@ -49,6 +71,7 @@ public class Main {
                         if (temp != null){
                             if(temp.equals("PING")){
                                 client.sendPong();
+                                pingReceived = true;
                             } else {
                                 System.out.println(Helper.convertMessage(temp));
                             }
@@ -60,6 +83,20 @@ public class Main {
             }
         });
         t1.start();
+
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                if (pingReceived){
+                    pingReceived = false;
+                } else {
+                    System.err.println("Server is disconnected!");
+                    client.setActive(false);
+                    System.exit(400);
+                }
+            }
+        },0,20000);
 
         try {
             Thread.sleep(100);

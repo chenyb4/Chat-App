@@ -45,7 +45,7 @@ public class Client {
             sendMessage("CONN "+userName+"\n");
         }
         else {
-            throw new IllegalArgumentException("Invalid username!");
+            throw new IllegalArgumentException("Invalid username!, make sure the username has more than 2 characters!");
         }
     }
 
@@ -60,7 +60,7 @@ public class Client {
             throw new IllegalStateException("Login first!");
         }
         else if (msg == null || msg.equals("")) {
-            throw new IllegalArgumentException("Invalid message!");
+            throw new IllegalArgumentException("Cannot send empty message!");
         }
         else {
             sendMessage("BCST "+msg+"\n");
@@ -83,6 +83,7 @@ public class Client {
     /**
      * sends pong to the server
      */
+
     public void sendPong() {
         //no condition to check, only logged-in users will receive ping from server
         sendMessage("PONG"+"\n");
@@ -98,4 +99,15 @@ public class Client {
         return isActive;
     }
 
+    public void setActive(boolean active) {
+        isActive = active;
+    }
+
+    public Socket getClientSocket() {
+        return clientSocket;
+    }
+
+    public PrintWriter getOut() {
+        return out;
+    }
 }
