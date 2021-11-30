@@ -1,4 +1,4 @@
-package com.company;
+package Client;
 
 import java.io.IOException;
 import java.util.Scanner;
@@ -58,8 +58,11 @@ public class Main {
             e.printStackTrace();
         }
 
+
         login(client);
 
+
+        //todo: Move it to a separate class
         //Thread for reading the messages from the server
         Thread t1 = new Thread(() -> {
             while (client.isActive()){
@@ -82,6 +85,7 @@ public class Main {
                 }
             }
         });
+
         t1.start();
 
         Timer timer = new Timer();
@@ -143,8 +147,8 @@ public class Main {
                 userName = readString();
                 client.connectWithUserName(userName);
                 //System.out.println(client.getIn().readLine());
-            }   catch (IllegalArgumentException iae) {
-                System.err.println(iae.getMessage());
+            }   catch (IllegalArgumentException | IOException e) {
+                System.err.println(e.getMessage());
                 System.out.println();
             }
         }
