@@ -1,4 +1,4 @@
-package com.company;
+package Client;
 
 public class Helper {
 
@@ -32,7 +32,7 @@ public class Helper {
         }else if(lineParts[0].equals("ER01")){
             return "This user name is already used. Please choose a different username!";
         }else if(lineParts[0].equals("ER02")){
-            return "The username you enter has an invalid format. Only characters, numbers and underscores are allowed!";
+            return ("The username you enter has an invalid format. Only characters, numbers and underscores are allowed!");
         }else if(lineParts[0].equals("ER03")){
             return "Please log in first!";
         }else if(lineParts[0].equals("DSCN")){

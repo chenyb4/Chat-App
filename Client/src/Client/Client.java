@@ -1,4 +1,4 @@
-package com.company;
+package Client;
 
 import java.io.*;
 import java.net.Socket;
@@ -38,8 +38,13 @@ public class Client {
      * @param userName of the client
      */
 
-    public void connectWithUserName (String userName) {
+    public void connectWithUserName (String userName) throws IOException {
         if (userName != null && userName.length() > 2) {
+            for (int i = 0; i < userName.length(); i++) {
+                if (!Character.isLetterOrDigit(userName.charAt(i))){
+                    throw new IllegalArgumentException("Username only should contains characters or digit!");
+                }
+            }
             this.userName = userName;
             isActive = true;
             sendMessage("CONN "+userName+"\n");
