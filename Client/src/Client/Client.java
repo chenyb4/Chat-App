@@ -13,13 +13,17 @@ public class Client {
     private String userName = "";
     private boolean isActive = false;
 
+    /**
+     * @param ip address
+     * @param port number
+     * @throws IOException caused by Stream either input or output
+     */
+
     public void startConnection (String ip, int port) throws IOException {
         System.out.println();
-        //System.out.println("Connection started with ip: "+ip+ " to port: "+port);
         clientSocket = new Socket(ip, port);
         in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         out = new PrintWriter(clientSocket.getOutputStream());
-        //System.out.println(in.readLine()); // Read the response from the server
         System.out.println();
     }
 
@@ -42,7 +46,7 @@ public class Client {
         if (userName != null && userName.length() > 2) {
             for (int i = 0; i < userName.length(); i++) {
                 if (!Character.isLetterOrDigit(userName.charAt(i))){
-                    throw new IllegalArgumentException("Username only should contains characters or digit!");
+                    throw new IllegalArgumentException("Only characters and numbers are allowed. Space is not allowed!");
                 }
             }
             this.userName = userName;
@@ -50,7 +54,7 @@ public class Client {
             sendMessage("CONN "+userName+"\n");
         }
         else {
-            throw new IllegalArgumentException("Invalid username!, make sure the username has more than 2 characters!");
+            throw new IllegalArgumentException("Username has an invalid format, the length should be higher than 2");
         }
     }
 
@@ -62,7 +66,7 @@ public class Client {
 
     public void sendBroadcastMessage (String msg) {
         if (userName.equals("")) {
-            throw new IllegalStateException("Login first!");
+            throw new IllegalStateException("Please login first");
         }
         else if (msg == null || msg.equals("")) {
             throw new IllegalArgumentException("Cannot send empty message!");
@@ -86,7 +90,7 @@ public class Client {
     }
 
     /**
-     * sends pong to the server
+     * Send pong to the server
      */
 
     public void sendPong() {
@@ -94,8 +98,64 @@ public class Client {
         sendMessage("PONG"+"\n");
     }
 
+    /**
+     * View all the connected clients, users with "*" are authenticated
+     */
 
-    //getters
+    public void viewAllClients () {
+
+    }
+
+    /**
+     * Send a private message to a particular user
+     */
+
+    public void sendPrivateMessage () {
+
+    }
+
+    /**
+     * Create a group
+     */
+
+    public void createGroup () {
+
+    }
+
+    /**
+     * Join a certain group
+     */
+
+    public void joinGroup () {
+
+    }
+
+    /**
+     * View all existing groups
+     */
+
+    public void viewExistingGroups () {
+
+    }
+
+    /**
+     * Send a message to a certain group
+     */
+
+    public void sendMessageToGroup () {
+
+    }
+
+    /**
+     * Leave a group
+     */
+
+    public void leaveGroup() {
+
+    }
+
+
+    //Getters
     public BufferedReader getIn() {
         return in;
     }
@@ -106,13 +166,5 @@ public class Client {
 
     public void setActive(boolean active) {
         isActive = active;
-    }
-
-    public Socket getClientSocket() {
-        return clientSocket;
-    }
-
-    public PrintWriter getOut() {
-        return out;
     }
 }
