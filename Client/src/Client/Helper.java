@@ -40,6 +40,11 @@ public class Helper {
         } else if (lineParts[0].equals("ER00")) {
             return "There is no such command. Please enter '?' to see the manual.";
         }
+
+        if(m==null){
+            return "(message not sent)";
+        }
+        
         return "";
     }
 }
