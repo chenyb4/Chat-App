@@ -1,5 +1,7 @@
 package Client;
 
+import Server.Server;
+
 import java.io.IOException;
 import java.util.Scanner;
 import java.util.Timer;
@@ -10,15 +12,10 @@ public class Main {
     public static void main(String[] args) throws IOException {
         String ip = "127.0.0.1";
         int port = 1337;
-        /*Server server = new Server();
-        try {
-            server.start(port);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
+
         Client client  = new Client();
         client.startConnection(ip,port);
-        chat(client);
+        //chat(client);
     }
 
 
