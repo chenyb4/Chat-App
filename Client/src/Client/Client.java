@@ -20,11 +20,10 @@ public class Client {
      */
 
     public void startConnection (String ip, int port) throws IOException {
-        System.out.println();
+        System.out.println("Client started to port "+port);
         clientSocket = new Socket(ip, port);
         in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         out = new PrintWriter(clientSocket.getOutputStream());
-        System.out.println();
     }
 
     /**
