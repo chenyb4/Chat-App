@@ -15,7 +15,7 @@ public class Main {
 
         Client client  = new Client();
         client.startConnection(ip,port);
-        //chat(client);
+        chat(client);
     }
 
 

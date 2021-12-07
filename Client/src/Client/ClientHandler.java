@@ -47,13 +47,13 @@ public class ClientHandler{
 
     public void startThreadForReadingMessages() {
         //Thread for reading the messages from the server
-        Thread thread = new Thread(() -> {
+        Thread messageHandler = new Thread(() -> {
             while (client.isActive()){
                 //This will read and print the messages from the server.
                 isMessageReceived();
             }
         });
-        thread.start();
+        messageHandler.start();
     }
 
     public void isMessageReceived() {
@@ -91,7 +91,7 @@ public class ClientHandler{
                 } else {
                     System.err.println("Server is disconnected!");
                     client.setActive(false);
-                    System.exit(400);
+                    System.exit(500);
                 }
             }
         },0,20000);
@@ -100,12 +100,12 @@ public class ClientHandler{
     public void startThreadForSendingMessages () {
         UserInterface userInterface = new UserInterface(client);
         //Thread for sending messages to the server
-        Thread thread = new Thread(() -> {
+        Thread SendingMessageHandler = new Thread(() -> {
             while (client.isActive()){
                 userInterface.userInterface();
             }
         });
-        thread.start();
+        SendingMessageHandler.start();
     }
 
     public String readString() {
