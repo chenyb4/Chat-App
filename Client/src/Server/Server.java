@@ -16,7 +16,7 @@ public class Server {
             clientSocket = serverSocket.accept();
             //Start message processing thread for every connected client
             messageProcessingThread();
-            out.println("Welcome to the chat room!");
+            out.println("INFO welcome to chat room");
             out.flush();
             //For sending ping for each client
             //pingThread();
@@ -24,7 +24,7 @@ public class Server {
     }
 
     public void messageProcessingThread() {
-        Thread t1 = new Thread(() -> {
+        Thread clientHandler = new Thread(() -> {
             try {
                 out = new PrintWriter(clientSocket.getOutputStream());
                 in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
@@ -32,21 +32,21 @@ public class Server {
                 e.printStackTrace();
             }
         });
-        t1.start();
+        clientHandler.start();
         try {
-            t1.join();
+            clientHandler.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
     public void pingThread() {
-        Thread t2 = new Thread(() -> {
+        Thread pingHandler = new Thread(() -> {
 
         });
-        t2.start();
+        pingHandler.start();
         try {
-            t2.join();
+            pingHandler.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -57,5 +57,10 @@ public class Server {
         out.close();
         clientSocket.close();
         serverSocket.close();
+    }
+
+    public void sendMessage (String msg) {
+        out.println(msg);
+        out.flush();
     }
 }

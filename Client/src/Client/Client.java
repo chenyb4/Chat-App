@@ -11,6 +11,7 @@ public class Client {
     private PrintWriter out;
     private BufferedReader in;
     private String userName = "";
+    private boolean isAuth = false;
     private boolean isActive = false;
 
     /**
@@ -67,6 +68,7 @@ public class Client {
         if (userName.equals("")) {
             throw new IllegalStateException("Please login first");
         }
+        //This is not necessary
         else if (msg == null || msg.equals("")) {
             throw new IllegalArgumentException("Cannot send empty message!");
         }
