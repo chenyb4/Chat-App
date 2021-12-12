@@ -33,7 +33,7 @@ public class ClientHandler{
 
     public void login () {
         String userName = "";
-        while (!client.isActive()){
+        while (!client.isConnected()){
             System.out.print("Please enter your username: >> ");
             try {
                 userName = readString();
@@ -48,7 +48,7 @@ public class ClientHandler{
     public void startThreadForReadingMessages() {
         //Thread for reading the messages from the server
         Thread messageHandler = new Thread(() -> {
-            while (client.isActive()){
+            while (client.isConnected()){
                 //This will read and print the messages from the server.
                 isMessageReceived();
             }
@@ -90,7 +90,7 @@ public class ClientHandler{
                     pingReceived = false;
                 } else {
                     System.err.println("Server is disconnected!");
-                    client.setActive(false);
+                    client.setConnected(false);
                     System.exit(500);
                 }
             }
@@ -101,7 +101,7 @@ public class ClientHandler{
         UserInterface userInterface = new UserInterface(client);
         //Thread for sending messages to the server
         Thread SendingMessageHandler = new Thread(() -> {
-            while (client.isActive()){
+            while (client.isConnected()){
                 userInterface.userInterface();
             }
         });

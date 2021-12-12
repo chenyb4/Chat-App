@@ -9,8 +9,8 @@ public class Main {
         Server server = new Server();
         try {
             server.start(port);
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException io) {
+            io.printStackTrace();
         }
     }
 }

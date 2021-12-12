@@ -2,17 +2,16 @@ package Client;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Client {
 
     private Socket clientSocket;
     private PrintWriter out;
     private BufferedReader in;
-    private String userName = "";
+    private String userName = "undefined";
     private boolean isAuth = false;
-    private boolean isActive = false;
+    private boolean isConnected = false;
+    private boolean receivedPong = false;
 
     /**
      * @param ip address
@@ -50,7 +49,7 @@ public class Client {
                 }
             }
             this.userName = userName;
-            isActive = true;
+            isConnected = true;
             sendMessage("CONN "+userName+"\n");
         }
         else {
@@ -83,7 +82,7 @@ public class Client {
      */
 
     public void stopConnection () throws IOException {
-        isActive = false;
+        isConnected = false;
         sendMessage("QUIT\n");
         in.close();
         out.close();
@@ -161,11 +160,36 @@ public class Client {
         return in;
     }
 
-    public boolean isActive() {
-        return isActive;
+    public boolean isConnected() {
+        return isConnected;
     }
 
-    public void setActive(boolean active) {
-        isActive = active;
+    public String getUserName() {
+        return userName;
+    }
+
+    public boolean isAuth() {
+        return isAuth;
+    }
+
+    public boolean isReceivedPong() {
+        return receivedPong;
+    }
+
+    //Setters
+    public void setConnected(boolean connected) {
+        isConnected = connected;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public void setAuth(boolean auth) {
+        isAuth = auth;
+    }
+
+    public void setReceivedPong(boolean receivedPong) {
+        this.receivedPong = receivedPong;
     }
 }
