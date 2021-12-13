@@ -1,6 +1,6 @@
 package Server;
 
-import Client.Client;
+
 
 import java.net.*;
 import java.io.*;
@@ -11,8 +11,8 @@ public class Server {
     //Fields
     private ServerSocket serverSocket;
     private Socket clientSocket;
-    private PrintWriter out;
-    private BufferedReader in;
+   // private PrintWriter out;
+ //   private BufferedReader in;
     private ArrayList<Client> clients = new ArrayList<>();
     private final boolean SHOULD_PING = false;
 
@@ -51,13 +51,13 @@ public class Server {
     public void messageHandlerThread() {
         new Thread(() -> {
             Client client = new Client();
-            streamHandler();
+            streamHandler(client);
             clients.add(client);
             sendMessageToClient(client,"INFO welcome to chat room");
             while (true){
                 try {
                     String temp;
-                    while((temp = in.readLine()) != null && !temp.equals("")) {
+                    while((temp = client.in.readLine()) != null && !temp.equals("")) {
                         clientInput(client,temp);
                     }
                 } catch (IOException e) {
@@ -67,10 +67,10 @@ public class Server {
         }).start();
     }
 
-    public void streamHandler () {
+    public void streamHandler (Client c) {
         try {
-            out = new PrintWriter(clientSocket.getOutputStream());
-            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            c.out = new PrintWriter(clientSocket.getOutputStream());
+            c.in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -83,9 +83,9 @@ public class Server {
         pingHandler.start();
     }
 
-    public void stop() throws IOException {
-        in.close();
-        out.close();
+    public void stop(Client c) throws IOException {
+        c.in.close();
+        c.out.close();
         clientSocket.close();
         serverSocket.close();
     }
@@ -93,8 +93,8 @@ public class Server {
     public void sendMessageToClient(Client client,String msg) {
         if (clients.contains(client)){
             System.out.println(">> [" + client.getUserName() + "] " + msg);
-            out.println(msg);
-            out.flush();
+            client.out.println(msg);
+            client.out.flush();
         } else {
             System.out.println("Skipped send (" + msg + "): client not active any more");
             clients.remove(client);
