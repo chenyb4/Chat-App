@@ -1,5 +1,8 @@
 package Client;
 
+import java.sql.PseudoColumnUsage;
+import java.util.List;
+
 public class Helper {
 
     public static String convertMessage(String m){
@@ -11,6 +14,7 @@ public class Helper {
                 return handleBCST(lineParts);
             }
             case "OK"->{
+                //server response message
                 return handleServerResponseMessage(lineParts);
             }
             case "ER01"->{return "This user name is already used. Please choose a different username!";}
@@ -47,17 +51,53 @@ public class Helper {
         return name+" says:"+message;
     }
 
+
+
+
     public static String handleServerResponseMessage(String[] lineParts){
-        if (lineParts[1].equals("BCST")) {
-            //sent broadcast message
-            return "(message sent)";
-        } else if (lineParts[1].equals("Goodbye")) {
-            //termination
-            return "You have exited the chat room.";
-        } else {
-            //logged in
-            String name=lineParts[1];
-            return "You have successfully logged in to the chat room, "+name+". Now you can start chatting!";
+        switch (lineParts[1]){
+            case "BCST"->{
+                //sent broadcast message
+                return "(message sent)";
+            }
+            case "Goodbye"->{
+                //termination
+                 return "You have exited the chat room.";
+            }
+            case "VEG"->{
+                if(lineParts[2]==""){
+                    return "There is no group for now.";
+                }else{
+
+                    String temp="The groups are: ";
+                    String[] groupNames=convertNameString(lineParts[2]);
+                    for (int i = 0; i < groupNames.length; i++) {
+                        temp+=groupNames[i];
+                    }
+                    return temp;
+                }
+            }
+            
+
+            default -> {
+                //logged in
+                String name=lineParts[1];
+                return "You have successfully logged in to the chat room, "+name+". Now you can start chatting!";
+            }
         }
+
+
+
     }
+
+    /**
+     *
+     * @param nameString the string containing the names of the users or the names of the users seperated by comma
+     * @return Array of names
+     */
+    private static String[] convertNameString(String nameString){
+        String[] lineParts=nameString.split(",");
+        return lineParts;
+    }
+
 }

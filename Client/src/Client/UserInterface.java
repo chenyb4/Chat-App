@@ -15,9 +15,25 @@ public class UserInterface {
         String userInput = readString();
         switch (userInput){
             case "-C" -> client.viewAllClients();
-            case "-D" -> client.sendPrivateMessage();
-            case "-G" -> client.createGroup();
-            case "-JG" -> client.joinGroup();
+            case "-D" -> {
+                String username;
+                String message;
+                System.out.println("Please enter the username of the user you want to send the message to: >> ");
+                username=readString();
+                System.out.println("Please enter the message you want to send to "+username+": >>");
+                message=readString();
+                client.sendPrivateMessage(username,message);
+            }
+            case "-G" -> {
+                String groupName;
+                System.out.println("Please enter the name of the group you want to create: >>");
+                groupName=readString();
+                client.createGroup(groupName);
+            }
+            case "-JG" ->{
+
+                client.joinGroup();
+            }
             case "-EG" -> client.viewExistingGroups();
             case "-SG" -> client.sendMessageToGroup();
             case "-LG" -> client.leaveGroup();
