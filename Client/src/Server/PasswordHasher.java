@@ -5,12 +5,11 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 
-public class PBKDF2 {
+public class PasswordHasher {
 
-    public static byte[] hashPassword (final char[] password, final byte[] salt, final int iterations, final int keyLength) {
+    private static byte[] hashPassword (final char[] password, final byte[] salt, final int iterations, final int keyLength) {
         try {
             SecretKeyFactory skf = SecretKeyFactory.getInstance( "PBKDF2WithHmacSHA512" );
             PBEKeySpec spec = new PBEKeySpec( password, salt, iterations, keyLength );
@@ -22,7 +21,7 @@ public class PBKDF2 {
         return null;
     }
 
-    public static String toHex (byte[] array) {
+    private static String toHex (byte[] array) {
         BigInteger bi = new BigInteger(1, array);
         String hex = bi.toString(16);
         int paddingLength = (array.length * 2) - hex.length();
@@ -34,19 +33,16 @@ public class PBKDF2 {
     }
 
     public static boolean comparePassword (String password, String inputtedPassword) {
-        String temp1 = initializeVariables(password);
-        String temp2 = initializeVariables(inputtedPassword);
-        return temp1.equals(temp2);
+        return toHash(password).equals(toHash(inputtedPassword));
     }
 
-    public static String initializeVariables(String password) {
-        SecureRandom random = new SecureRandom();
-        byte[] salt = new byte[16];
-        random.nextBytes(salt);
+    public static String toHash(String password) {
+        String salt = "1234";
         int iterations = 65536;
         int keyLength = 128;
-        byte[] hashedBytes = PBKDF2.hashPassword(password.toCharArray(),salt,iterations,keyLength);
-        password = PBKDF2.toHex(hashedBytes);
-        return password;
+        char[] passwordChars = password.toCharArray();
+        byte[] saltBytes = salt.getBytes();
+        byte[] hashedBytes = hashPassword(passwordChars, saltBytes, iterations, keyLength);
+        return toHex(hashedBytes);
     }
 }

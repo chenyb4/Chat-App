@@ -1,13 +1,12 @@
 package Server.Model;
 
-import Server.PBKDF2;
+import Server.PasswordHasher;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.security.SecureRandom;
 
 public class Client {
 
@@ -22,6 +21,11 @@ public class Client {
 
     public Client(Socket clientSocket) {
         this.clientSocket = clientSocket;
+    }
+
+    public Client(String userName, String password) {
+        this.userName = userName;
+        this.password = password;
     }
 
     //Getters
@@ -59,13 +63,11 @@ public class Client {
     }
 
     public void setPassword(String password) {
-        SecureRandom random = new SecureRandom();
-        byte[] salt = new byte[16];
-        random.nextBytes(salt);
-        int iterations = 65536;
-        int keyLength = 128;
-        byte[] hashedBytes = PBKDF2.hashPassword(password.toCharArray(),salt,iterations,keyLength);
-        this.password = PBKDF2.toHex(hashedBytes);
+        this.password = PasswordHasher.toHash(password);
+    }
+
+    public void setClientSocket(Socket clientSocket) {
+        this.clientSocket = clientSocket;
     }
 
     //Methods
