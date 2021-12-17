@@ -41,10 +41,6 @@ public class Client {
         return receivedPong;
     }
 
-    public String getPassword() {
-        return password;
-    }
-
     //Setters
     public void setConnected(boolean connected) {
         isConnected = connected;

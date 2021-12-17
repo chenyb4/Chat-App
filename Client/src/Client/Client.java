@@ -103,30 +103,53 @@ public class Client {
      */
 
     public void viewAllClients () {
-
+        sendMessage("VCC");
     }
 
     /**
-     * Send a private message to a particular user
+     *
+     * @param username username of the message receiver
+     * @param msg the private message
      */
+    public void sendPrivateMessage (String username,String msg) {
+        //check if the user is logged in
+        if (userName.equals("")) {
+            throw new IllegalStateException("Please login first");
+        }
 
-    public void sendPrivateMessage () {
 
+        if (username.equals("")) {
+            //check if the username input is correct
+            throw new IllegalStateException("the username is not allowed to be an empty string");
+        } else if (msg == null || msg.equals("")) {
+            //check if the message entered is correct
+            throw new IllegalArgumentException("Cannot send empty message!");
+        }
+        else {
+            sendMessage("PM "+username+" "+msg+"\n");
+        }
     }
 
     /**
-     * Create a group
+     * create a group with provide group name
+     * @param groupName the name of the group we want to create
      */
-
     public void createGroup (String groupName) {
-        sendMessage("CG "+groupName+"\n");
+        //check if the user is logged in
+        if (userName.equals("")) {
+            throw new IllegalStateException("Please login first");
+        }
+
+        if (groupName.equals("")) {
+            //check if the username input is correct
+            throw new IllegalStateException("the group's name is not allowed to be an empty string");
+        } else {
+            sendMessage("CG " + groupName + "\n");
+        }
+
     }
 
-    /**
-     * Join a certain group
-     */
-
-    public void joinGroup () {
+    public void joinGroup (String groupName) {
 
     }
 
