@@ -15,6 +15,7 @@ public class UserInterface {
         String userInput = readString();
         switch (userInput){
             case "-C" -> client.viewAllClients();
+            case "-JG" -> client.joinGroup(null);
             case "-D" -> {
                 String username;
                 String message;
@@ -29,10 +30,6 @@ public class UserInterface {
                 System.out.println("Please enter the name of the group you want to create: >>");
                 groupName=readString();
                 client.createGroup(groupName);
-            }
-            case "-JG" ->{
-
-                client.joinGroup();
             }
             case "-EG" -> client.viewExistingGroups();
             case "-SG" -> client.sendMessageToGroup();

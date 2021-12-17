@@ -1,11 +1,6 @@
 package Client;
 
-import Server.Server;
-
 import java.io.IOException;
-import java.util.Scanner;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class Main {
 

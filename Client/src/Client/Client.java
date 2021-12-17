@@ -144,12 +144,10 @@ public class Client {
             //check if the username input is correct
             throw new IllegalStateException("the group's name is not allowed to be an empty string");
         } else {
-            sendMessage("CG "+groupName+"\n");
+            sendMessage("CG " + groupName + "\n");
         }
 
-
     }
-
 
     public void joinGroup (String groupName) {
 
