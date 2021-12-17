@@ -16,7 +16,11 @@ public class UserInterface {
         switch (userInput){
             case "-C" -> client.viewAllClients();
             case "-D" -> client.sendPrivateMessage();
-            case "-G" -> client.createGroup();
+            case "-G" -> {
+                System.out.print("Enter the group name: ");
+                String groupName = readString();
+                client.createGroup(groupName);
+            }
             case "-JG" -> client.joinGroup();
             case "-EG" -> client.viewExistingGroups();
             case "-SG" -> client.sendMessageToGroup();

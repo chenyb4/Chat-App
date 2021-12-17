@@ -4,6 +4,9 @@ public class Helper {
 
     public static String convertMessage(String m){
         //String fullMessage="";
+        if(m == null || m.equals("")){
+            return "(message not sent)";
+        }
         String[] lineParts=m.split(" ");
         if(m.contains("INFO")) {
             return "Welcome to the chat server!";
@@ -22,7 +25,10 @@ public class Helper {
             } else if (lineParts[1].equals("Goodbye")) {
                 //termination
                 return "You have exited the chat room.";
-            } else {
+            } else if (lineParts[1].equals("CG")){
+                return "(Group created)";
+            }
+            else {
                 //logged in
                 String name=lineParts[1];
                 return "You have successfully logged in to the chat room, "+name+". Now you can start chatting!";
@@ -41,10 +47,6 @@ public class Helper {
             return "There is no such command. Please enter '?' to see the manual.";
         }
 
-        if(m==null){
-            return "(message not sent)";
-        }
-        
         return "";
     }
 }

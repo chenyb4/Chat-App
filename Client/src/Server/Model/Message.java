@@ -1,4 +1,4 @@
-package Server;
+package Server.Model;
 
 public class Message {
     private String type = "";

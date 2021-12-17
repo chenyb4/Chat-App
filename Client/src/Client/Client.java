@@ -118,8 +118,8 @@ public class Client {
      * Create a group
      */
 
-    public void createGroup () {
-
+    public void createGroup (String groupName) {
+        sendMessage("CG "+groupName+"\n");
     }
 
     /**
