@@ -2,6 +2,7 @@ package Client;
 
 import java.io.IOException;
 import java.util.Scanner;
+import java.util.logging.Handler;
 
 public class UserInterface {
 
@@ -14,8 +15,14 @@ public class UserInterface {
     public void userInterface () {
         String userInput = readString();
         switch (userInput){
-            case "-C" -> client.viewAllClients();
-            case "-JG" -> client.joinGroup(null);
+            case "-C" -> {
+                try {
+                    client.viewAllClients();
+
+                } catch (Exception e) {
+                    System.err.println(e.getMessage());
+                }
+            }
             case "-D" -> {
                 String username;
                 String message;
@@ -23,17 +30,61 @@ public class UserInterface {
                 username=readString();
                 System.out.println("Please enter the message you want to send to "+username+": >>");
                 message=readString();
-                client.sendPrivateMessage(username,message);
+                try {
+                    client.sendPrivateMessage(username,message);
+                } catch (Exception e) {
+                    System.err.println(e.getMessage());
+                }
             }
             case "-G" -> {
                 String groupName;
                 System.out.println("Please enter the name of the group you want to create: >>");
                 groupName=readString();
-                client.createGroup(groupName);
+                try {
+                    client.createGroup(groupName);
+                } catch (Exception e) {
+                    System.err.println(e.getMessage());
+                }
             }
-            case "-EG" -> client.viewExistingGroups();
-            case "-SG" -> client.sendMessageToGroup();
-            case "-LG" -> client.leaveGroup();
+            case "-JG" ->{
+                String groupName;
+                System.out.println("Please enter the name of the group you want to join: >>");
+                groupName=readString();
+                try {
+                    client.joinGroup(groupName);
+                } catch (Exception e) {
+                    System.err.println(e.getMessage());
+                }
+            }
+            case "-EG" -> {
+                try {
+                    client.viewExistingGroups();
+                } catch (Exception e) {
+                    System.err.println(e.getMessage());
+                }
+            }
+            case "-SG" ->{
+                String groupName;
+                System.out.println("Please enter the name of the group that you want to send the message to: >>");
+                groupName=readString();
+                System.out.println("Please enter the message you want to send to the group: >>");
+                String msg=readString();
+                try {
+                    client.sendMessageToGroup(groupName,msg);
+                } catch (Exception e) {
+                    System.err.println(e.getMessage());
+                }
+            }
+            case "-LG" -> {
+                String groupName;
+                System.out.println("Pleae enter the name of the group you want to leave: >>");
+                groupName=readString();
+                try {
+                    client.leaveGroup(groupName);
+                } catch (Exception e) {
+                    System.err.println(e.getMessage());
+                }
+            }
             case "-Q" -> {
                 try {
                     client.stopConnection();

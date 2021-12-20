@@ -19,7 +19,9 @@ public class Helper {
             case "OK"->{
                 //server response message
                 return handleServerResponseMessage(lineParts);
+
             }
+            case ""
             case "ER01"->{return "This user name is already used. Please choose a different username!";}
             case "ER02"->{return "The username you enter has an invalid format. Only characters, numbers and underscores are allowed!";}
             case "ER03"->{return "Please log in first!";}
@@ -55,8 +57,11 @@ public class Helper {
     }
 
 
-
-
+    /**
+     * if the received message contains "OK", then that is a server response message
+     * @param lineParts The line of message seperated by space and stored in array
+     * @return the message returned to and handled by method convertMessage
+     */
     public static String handleServerResponseMessage(String[] lineParts){
         switch (lineParts[1]){
             case "BCST"->{
@@ -77,11 +82,21 @@ public class Helper {
                     String temp="The groups are: ";
                     String[] groupNames=convertNameString(lineParts[2]);
                     for (int i = 0; i < groupNames.length; i++) {
-                        temp+=groupNames[i];
+                        if(i==0){
+                            //first group name
+                            temp+=groupNames[i];
+                        }else{
+                            //since the 2nd group name, there should be a comma in front for user friendliness puposes
+                            temp+=","+groupNames[i];
+                        }
+
                     }
                     return temp;
                 }
             }
+
+
+
             default -> {
                 //logged in
                 String name=lineParts[1];
@@ -92,7 +107,7 @@ public class Helper {
 
     /**
      *
-     * @param nameString the string containing the names of the users or the names of the users seperated by comma
+     * @param nameString the string containing the names of the users or the names of the users or groups seperated by comma
      * @return Array of names
      */
     private static String[] convertNameString(String nameString){
