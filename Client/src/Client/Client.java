@@ -143,9 +143,8 @@ public class Client {
             //check if the groupname input is correct
             throw new IllegalStateException("the group's name is not allowed to be an empty string");
         } else {
-            sendMessage("CG "+groupName+"\n");
+            sendMessage("CG " + groupName + "\n");
         }
-
 
     }
 

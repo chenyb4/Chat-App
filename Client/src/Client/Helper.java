@@ -7,6 +7,9 @@ public class Helper {
 
     public static String convertMessage(String m){
         //String fullMessage="";
+        if(m == null || m.equals("")){
+            return "(message not sent)";
+        }
         String[] lineParts=m.split(" ");
 
         switch (lineParts[0]){
@@ -65,9 +68,11 @@ public class Helper {
                 //sent broadcast message
                 return "(message sent)";
             }
-            case "Goodbye"->{
+            case "Goodbye"-> {
                 //termination
-                 return "You have exited the chat room.";
+                return "You have exited the chat room.";
+            } case  "CG" -> {
+                return "(Group created)";
             }
             case "VEG"->{
                 if(lineParts[2]==""){
@@ -98,9 +103,6 @@ public class Helper {
                 return "You have successfully logged in to the chat room, "+name+". Now you can start chatting!";
             }
         }
-
-
-
     }
 
     /**
