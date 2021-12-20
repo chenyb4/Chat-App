@@ -13,6 +13,12 @@ public class Client {
     private boolean isConnected = false;
     private boolean receivedPong = false;
 
+    private void checkLogin(){
+        if (this.userName.equals("")) {
+            throw new IllegalStateException("Please login first");
+        }
+    }
+
     /**
      * @param ip address
      * @param port number
@@ -64,11 +70,9 @@ public class Client {
      */
 
     public void sendBroadcastMessage (String msg) {
-        if (userName.equals("")) {
-            throw new IllegalStateException("Please login first");
-        }
+        checkLogin();
         //This is not necessary
-        else if (msg == null || msg.equals("")) {
+        if (msg == null || msg.equals("")) {
             throw new IllegalArgumentException("Cannot send empty message!");
         }
         else {
@@ -103,7 +107,7 @@ public class Client {
      */
 
     public void viewAllClients () {
-        sendMessage("VCC");
+        sendMessage("VCC"+"\n");
     }
 
     /**
@@ -113,10 +117,7 @@ public class Client {
      */
     public void sendPrivateMessage (String username,String msg) {
         //check if the user is logged in
-        if (userName.equals("")) {
-            throw new IllegalStateException("Please login first");
-        }
-
+        checkLogin();
 
         if (username.equals("")) {
             //check if the username input is correct
@@ -136,12 +137,10 @@ public class Client {
      */
     public void createGroup (String groupName) {
         //check if the user is logged in
-        if (userName.equals("")) {
-            throw new IllegalStateException("Please login first");
-        }
+        checkLogin();
 
         if (groupName.equals("")) {
-            //check if the username input is correct
+            //check if the groupname input is correct
             throw new IllegalStateException("the group's name is not allowed to be an empty string");
         } else {
             sendMessage("CG "+groupName+"\n");
@@ -151,31 +150,58 @@ public class Client {
     }
 
 
+    /**
+     *  to join a group by group name
+     * @param groupName the name of the group to join
+     */
     public void joinGroup (String groupName) {
+        //check if the user is logged in
+       checkLogin();
 
+        if (groupName.equals("")) {
+            //check if the groupname input is correct
+            throw new IllegalStateException("the group's name is not allowed to be an empty string");
+        } else {
+            sendMessage("JG "+groupName+"\n");
+        }
     }
 
-    /**
-     * View all existing groups
-     */
 
+    /**
+     * see all the groups that are already created
+     */
     public void viewExistingGroups () {
-
+        //check if the user is logged in
+        checkLogin();
+        sendMessage("VEG");
     }
 
+
     /**
-     * Send a message to a certain group
+     * send a message to all clients in a group
+     * @param groupName the name of the group to send message to
+     * @param msg the message to send to the group
      */
-
-    public void sendMessageToGroup () {
-
+    public void sendMessageToGroup (String groupName,String msg) {
+        checkLogin();
+        if (groupName.equals("")) {
+            //check if the group name input is correct
+            throw new IllegalStateException("the group's name is not allowed to be an empty string");
+        } else {
+            sendMessage("BCSTG "+groupName+" "+msg+"\n");
+        }
     }
 
-    /**
-     * Leave a group
-     */
 
-    public void leaveGroup() {
+
+    public void leaveGroup(String groupName) {
+        checkLogin();
+        if (groupName.equals("")) {
+            //check if the group name input is correct
+            throw new IllegalStateException("the group's name is not allowed to be an empty string");
+        } else {
+            sendMessage("LG "+groupName+"\n");
+        }
 
     }
 
