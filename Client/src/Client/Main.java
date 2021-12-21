@@ -1,14 +1,17 @@
 package Client;
 
+import Client.Model.Client;
+import Client.Model.ClientHandler;
+import Client.Model.UserInterface;
+
 import java.io.IOException;
 
 public class Main {
 
     public static void main(String[] args) throws IOException {
+        Client client  = new Client();
         String ip = "127.0.0.1";
         int port = 1337;
-
-        Client client  = new Client();
         client.startConnection(ip,port);
         chat(client);
     }

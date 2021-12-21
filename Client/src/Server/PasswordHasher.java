@@ -33,15 +33,14 @@ public class PasswordHasher {
     }
 
     public static boolean comparePassword (String password, String inputtedPassword) {
-        return toHash(password).equals(toHash(inputtedPassword));
+        return password.equals(toHash(inputtedPassword));
     }
 
     public static String toHash(String password) {
-        String salt = "1234";
         int iterations = 65536;
         int keyLength = 128;
         char[] passwordChars = password.toCharArray();
-        byte[] saltBytes = salt.getBytes();
+        byte[] saltBytes = new byte[16];
         byte[] hashedBytes = hashPassword(passwordChars, saltBytes, iterations, keyLength);
         return toHex(hashedBytes);
     }

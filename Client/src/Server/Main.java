@@ -1,5 +1,6 @@
 package Server;
 
+import Server.Data.DataProvider;
 import Server.Model.Server;
 
 import java.io.IOException;
@@ -12,7 +13,7 @@ public class Main {
         try {
             server.start(port);
         } catch (IOException io) {
-            io.printStackTrace();
+            System.err.println(io.getMessage());
         }
     }
 }

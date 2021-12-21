@@ -1,15 +1,7 @@
 package Server.Model;
 
-
-
-import Server.Model.Client;
-import Server.Model.Group;
-import Server.Model.Message;
-
 import java.net.*;
 import java.io.*;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -20,9 +12,11 @@ public class Server {
     //Fields
     private ServerSocket serverSocket;
     private Socket clientSocket;
+    private Socket fileTransferSocket;
     private List<Client> clients = new LinkedList<>();
     private List<Group> groups = new LinkedList<>();
-    private final boolean SHOULD_PING = true;
+    private final boolean SHOULD_PING = false;
+    private ServerHandler serverHandler = new ServerHandler();
 
     //Commands
     private final String CMD_CONN = "CONN"; //Login
@@ -50,11 +44,15 @@ public class Server {
         try {
             while (true) {
                 clientSocket = serverSocket.accept();
+                //fileTransferSocket = serverSocket.accept();
                 //Start message processing thread for every connected client
                 messageHandlerThread();
             }
         } finally {
+            clientSocket.close();
+            fileTransferSocket.close();
             serverSocket.close();
+            System.err.println("Unexpected error!");
         }
     }
 
@@ -65,6 +63,7 @@ public class Server {
     public void messageHandlerThread() {
         new Thread(() -> {
             Client client = new Client(clientSocket);
+            client.setFileTransferSocket(fileTransferSocket);
             client.initializeStreams();
             clients.add(client);
             sendMessageToClient(client,"INFO welcome to chat room");
@@ -80,6 +79,52 @@ public class Server {
                 }
             }
         }).start();
+    }
+
+    /**
+     * @param client who is connected to the server
+     * @param input from the client (Command)
+     */
+
+    public void clientInput (Client client,String input) {
+        Message command = parseCommand(input);
+        String[] lineParts = command.getPayload().split(" ",2);
+        System.out.println("<< [" + client.getUserName() + " " + client.isAuthenticated() + "] " + command.getType() + " " + command.getPayload());
+        switch (client.getUserName()) {
+            case "" -> checkIfLoggedIn(command,client);
+            //At this point, we know that the user is logged in
+            default -> {
+                switch (command.getType()){
+                    case CMD_QUIT -> quit(client);
+                    case CMD_BCST -> sendBroadcastMessage(client,command.getPayload());
+                    case CMD_PONG -> client.setReceivedPong(true);
+                    case CMD_CG -> createGroup(client,command.getPayload());
+                    case CMD_JG -> joinGroup(client,command.getPayload());
+                    case CMD_VEG -> viewExistingGroups(client);
+                    case CMD_PM -> {
+                        //Check if the input at least contain username and message
+                        if (lineParts.length < 2){
+                            sendMessageToClient(client,"ER12 Cannot send empty message");
+                        } else {
+                            sendPrivateMessage(client,lineParts[0],lineParts[1]);
+                        }
+                    }
+                    case CMD_VCC -> viewConnectedClients(client);
+                    case CMD_LG -> leaveGroup(client,command.getPayload());
+                    case CMD_AUTH -> authenticateClient(client,command.getPayload());
+                    case CMD_BCSTG -> {
+                        //Check if the input at least contain group name and message
+                        if (lineParts.length < 2){
+                            sendMessageToClient(client,"ER12 Cannot send empty message");
+                        } else {
+                            sendMessageToGroup(client,lineParts[0],lineParts[1]);
+                        }
+                    }
+                    //Other commands than these are an error
+                    default -> sendMessageToClient(client,"ER00 Unknown command");
+                }
+            }
+        }
     }
 
     /**
@@ -99,87 +144,40 @@ public class Server {
     }
 
     /**
-     * @param client who is connected to the server
-     * @param input from the client (Command)
-     */
-
-    public void clientInput (Client client,String input) {
-        Message command = parseCommand(input);
-        String[] lineParts = null;
-        if (command.getPayload().contains(" ")){
-            lineParts = command.getPayload().split(" ",2);
-        }
-        System.out.println("<< [" + client.getUserName() + " " + client.isAuthenticated() + "] " + command.getType() + " " + command.getPayload());
-        switch (client.getUserName()) {
-            case "" -> checkIfLoggedIn(command,client);
-            //At this point, we know that the user is logged in
-            default -> {
-                switch (command.getType()){
-                    case CMD_QUIT -> quit(client);
-                    case CMD_BCST -> sendBroadcastMessage(client,command.getPayload());
-                    case CMD_PONG -> client.setReceivedPong(true);
-                    case CMD_CG -> createGroup(client,command.getPayload());
-                    case CMD_JG -> joinGroup(client,command.getPayload());
-                    case CMD_VEG -> viewExistingGroups(client);
-                    case CMD_PM -> {
-                        assert lineParts != null;
-                        sendPrivateMessage(client,lineParts[0],lineParts[1]);
-                    }
-                    case CMD_VCC -> viewConnectedClients(client);
-                    case CMD_LG -> leaveGroup(client,command.getPayload());
-                    case CMD_AUTH -> authenticateClient(client,command.getPayload());
-                    case CMD_BCSTG -> {
-                        assert lineParts != null;
-                        sendMessageToGroup(client,lineParts[0],lineParts[1]);
-                    }
-                    //Other commands than these are an error
-                    default -> sendMessageToClient(client,"ER00 Unknown command");
-                }
-            }
-        }
-
-    }
-
-    /**
      * Require the current status of the server.
      */
 
     public void stats () {
         System.out.println("Total number of clients: " + clients.size());
-        System.out.println("Number of connected clients: " + connectedClients().size());
+        System.out.println("Number of connected clients: " + serverHandler.connectedClientsList(clients).size());
     }
 
     /**
-     * @return an arraylist of connected clients (logged in clients).
+     * Send a PING to the client
+     * @param client who will receive the PING request
      */
-
-    public ArrayList<Client> connectedClients () {
-        ArrayList<Client> connectedClients = new ArrayList<>();
-        for (Client c: clients) {
-            if (c.isConnected()){
-                connectedClients.add(c);
-            }
-        }
-        return connectedClients;
-    }
 
     public void heartBeat (Client client) {
         System.out.println("~~ [" + client.getUserName() + " " + client.isAuthenticated() + "] Heartbeat initiated");
         ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
         executorService.scheduleAtFixedRate(() -> {
+            //Wait for 2 seconds and set received pong to false
             try {
                 Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            } catch (InterruptedException ie) {
+                System.err.println(ie.getMessage());
             }
+            //Reset ReceivedPong to false
             client.setReceivedPong(false);
             sendMessageToClient(client,"PING");
             //Wait for 4 seconds for response
             try {
                 Thread.sleep(4000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            } catch (InterruptedException ie) {
+                System.err.println(ie.getMessage());
             }
+            //If the client changed the status receivedPong to true within 4 seconds,
+            // then the heartbeat is success, otherwise it failed
             if (client.isReceivedPong()){
                 System.out.println("~~ [" + client.getUserName() + " " + client.isAuthenticated() + "] Heartbeat expired - SUCCESS");
                 System.out.println("~~ [" + client.getUserName() + " " + client.isAuthenticated() + "] Heartbeat initiated");
@@ -218,12 +216,12 @@ public class Server {
      */
 
     public void leaveGroup (Client client, String groupName) {
-        if (!validFormat(groupName)){
+        if (!serverHandler.validFormat(groupName)){
             sendMessageToClient(client,"ER06 Group name has an invalid format");
-        } else if (!groupExists(groupName)){
+        } else if (!serverHandler.groupExists(groupName,groups)){
             sendMessageToClient(client,"ER07 Group name does not exist");
         } else {
-            Group group = findGroupByName(groupName);
+            Group group = serverHandler.findGroupByName(groupName,groups);
             if (!group.checkClientInGroup(client.getUserName(),groupName)){
                 sendMessageToClient(client,"ER08 Please join the group first");
             } else {
@@ -242,7 +240,7 @@ public class Server {
      */
 
     public void sendPrivateMessage (Client client,String username,String msg) {
-        Client receiver = findClientByUsername(username);
+        Client receiver = serverHandler.findClientByUsername(username,clients);
         if (receiver == null){
             sendMessageToClient(client, "ER04 User does not exist");
         } else {
@@ -261,30 +259,14 @@ public class Server {
     public void checkIfLoggedIn (Message command, Client client) {
         if (!command.getType().equals(CMD_CONN)){
             sendMessageToClient(client,"ER03 Please log in first");
-        } else if (!validFormat(command.getPayload())){
+        } else if (!serverHandler.validFormat(command.getPayload())){
             sendMessageToClient(client, "ER02 Username has an invalid format (only characters and numbers are allowed. Space is not allowed)");
-        } else if (userExists(command.getPayload())){
+        } else if (serverHandler.userExists(command.getPayload(),clients)){
             sendMessageToClient(client, "ER01 User already logged in");
         } else {
             //The user provided correct information
             setUser(client,command.getPayload());
         }
-    }
-
-    /**
-     * @param groupName to be checked in the group list
-     * @return true if the group exists otherwise return false
-     */
-
-    public boolean groupExists (String groupName) {
-        boolean result = false;
-        for (Group g:groups) {
-            if (g.getName().equals(groupName)){
-                result = true;
-                break;
-            }
-        }
-        return result;
     }
 
     /**
@@ -298,7 +280,7 @@ public class Server {
             client.out.print("OK " + CMD_VCC + " ");
             client.out.flush();
             System.out.print(">> [" + client.getUserName() + "] OK " + CMD_VCC + " ");
-            for (Client c:connectedClients()) {
+            for (Client c: serverHandler.connectedClientsList(clients)) {
                 client.out.print(c);
                 client.out.flush();
                 System.out.print(c);
@@ -334,43 +316,15 @@ public class Server {
     }
 
     /**
-     * @param groupName to be found
-     * @return the group by its name if found, otherwise return null
-     */
-
-    public Group findGroupByName (String groupName) {
-        for (Group g:groups) {
-            if (g.getName().equals(groupName)){
-                return g;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * @param username to be found
-     * @return the client by his/her name if found, otherwise return null
-     */
-
-    public Client findClientByUsername (String username) {
-        for (Client c:clients) {
-            if (c.getUserName().equals(username)){
-                return c;
-            }
-        }
-        return null;
-    }
-
-    /**
      * All if-statements are tested out in this method and its fully functional
      * @param client who wants to create the group
      * @param groupName to be created
      */
 
     public void createGroup (Client client, String groupName){
-        if (groupExists(groupName)){
+        if (serverHandler.groupExists(groupName,groups)){
             sendMessageToClient(client,"ER05 Group name already exist");
-        } else if (!validFormat(groupName)) {
+        } else if (!serverHandler.validFormat(groupName)) {
             sendMessageToClient(client,"ER06 Group name has an invalid format");
         } else {
             Group group = new Group(groupName);
@@ -387,35 +341,18 @@ public class Server {
      */
 
     public void joinGroup (Client client,String groupName) {
-        if (!validFormat(groupName)){
+        if (!serverHandler.validFormat(groupName)){
             sendMessageToClient(client,"ER06 Group name has an invalid format");
-        } else if (!groupExists(groupName)){
+        } else if (!serverHandler.groupExists(groupName,groups)){
             sendMessageToClient(client,"ER07 Group name does not exist");
-        } else if (checkUserInGroup(client.getUserName(),groupName)){
+        } else if (serverHandler.checkUserInGroup(client.getUserName(),groupName,groups)){
             sendMessageToClient(client,"ER09 User already joined this group");
         } else {
-            Group group = findGroupByName(groupName);
+            Group group = serverHandler.findGroupByName(groupName,groups);
             group.sendMessageToGroupMembersWhenJoined(client);
             group.joinClientToGroup(client);
             sendMessageToClient(client,"OK " + CMD_JG + " " + groupName);
         }
-    }
-
-    /**
-     * @param username who has to be checked
-     * @param groupName to be checked
-     * @return true if the user exist in certain group
-     */
-
-    public boolean checkUserInGroup (String username,String groupName) {
-        boolean result = false;
-        for (Group g:groups){
-            if (g.checkClientInGroup(username,groupName)){
-                result = true;
-                break;
-            }
-        }
-        return result;
     }
 
     /**
@@ -438,7 +375,6 @@ public class Server {
         removeClient(client);
     }
 
-
     /**
      * Remove the client from the groups and from the client list
      * @param client to be removed
@@ -452,12 +388,6 @@ public class Server {
         }
         client.stopStreams();
         stats();
-        // TODO: 16-Dec-21 check this for possible errors
-        /*try {
-            clientSocket.close();
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }*/
     }
 
     /**
@@ -466,7 +396,7 @@ public class Server {
      */
 
     public void sendBroadcastMessage (Client client, String message) {
-        for (Client c : connectedClients()) {
+        for (Client c : serverHandler.connectedClientsList(clients)) {
             if (!c.getUserName().equals(client.getUserName())){
                 sendMessageToClient(c,CMD_BCST + " " + client.getUserName() + " " + client.isAuthenticated() + " " + message);
             }
@@ -474,13 +404,20 @@ public class Server {
         sendMessageToClient(client,"OK " + CMD_BCST + " " + message);
     }
 
+    /**
+     * Send a broadcast message to a certain group
+     * @param client who wants to send a message to the group
+     * @param groupName to be sent the message to
+     * @param message from the client
+     */
+
     public void sendMessageToGroup (Client client, String groupName, String message) {
-        if (!validFormat(groupName)) {
+        if (!serverHandler.validFormat(groupName)) {
             sendMessageToClient(client,"ER06 Group name has an invalid format");
-        } else if (!groupExists(groupName)){
+        } else if (!serverHandler.groupExists(groupName,groups)){
             sendMessageToClient(client, "ER07 Group name does not exist");
         } else {
-            Group group = findGroupByName(groupName);
+            Group group = serverHandler.findGroupByName(groupName,groups);
             if (!group.checkClientInGroup(client.getUserName(),groupName)) {
                 sendMessageToClient(client,"ER08 Please join the group first");
             } else {
@@ -488,38 +425,6 @@ public class Server {
                 sendMessageToClient(client,"OK " + CMD_BCSTG + " " + groupName + " " + message);
             }
         }
-    }
-
-    /**
-     * @param username to be checked
-     * @return true if the user exists in the list
-     */
-
-    public boolean userExists (String username) {
-        boolean result = false;
-        for (Client c:clients) {
-            if (c.getUserName().equals(username)) {
-                result = true;
-                break;
-            }
-        }
-        return result;
-    }
-
-    /**
-     * Check the format of either group name or the username
-     * @param name of the group or the user
-     * @return true if format is correct, otherwise return flase
-     */
-
-    public boolean validFormat(String name) {
-        boolean result = false;
-        for (int i = 0; i < name.length(); i++) {
-            if (Character.isLetterOrDigit(name.charAt(i)) && name.length() > 2 && !name.contains(" ") && !name.contains(",")) {
-                result = true;
-            }
-        }
-        return result;
     }
 
     /**
@@ -534,20 +439,24 @@ public class Server {
         sendMessageToClient(client,"OK "+username);
         stats();
         if (SHOULD_PING){
-            //todo: check if this is correct
             new Thread(() -> heartBeat(client)).start();
         }
     }
 
+    /**
+     * @param client who wants to authenticate him/her self
+     * @param password to be stored
+     */
+
     public void authenticateClient (Client client, String password) {
-        if (password.length() < 6 || password.contains(" ")) {
+        if (password.length() < 6 || password.contains(" ") || password.length() > 20) {
             sendMessageToClient(client, "ER10 Password has an invalid format (the password should be between 6 - 20 characters)");
         } else if (client.isAuth()) {
             sendMessageToClient(client,"ER11 User already authenticated");
         } else {
             client.setAuth(true);
             client.setPassword(password);
-            for (Client c:connectedClients()) {
+            for (Client c: serverHandler.connectedClientsList(clients)) {
                 if (!c.getUserName().equals(client.getUserName())) {
                     c.out.println("AUTH " + client.getUserName() + " " + client.isAuthenticated());
                     c.out.flush();
