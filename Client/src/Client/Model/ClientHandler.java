@@ -1,9 +1,12 @@
-package Client;
+package Client.Model;
 
+import Client.Model.Client;
+import Client.Model.UserInterface;
 import java.io.IOException;
 import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
+import Client.Helper;
 
 public class ClientHandler{
 

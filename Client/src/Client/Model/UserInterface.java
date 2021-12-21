@@ -1,4 +1,6 @@
-package Client;
+package Client.Model;
+
+import Client.Model.Client;
 
 import java.io.IOException;
 import java.util.Scanner;
