@@ -1,12 +1,10 @@
 package Client.Model;
 
-import Client.Model.Client;
-import Client.Model.UserInterface;
 import java.io.IOException;
 import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
-import Client.Helper;
+import Client.MessageConverter;
 
 public class ClientHandler{
 
@@ -24,7 +22,7 @@ public class ClientHandler{
     public void welcomeMessage() {
         try {
             String welcomeMessage = client.getIn().readLine();
-            System.out.println(Helper.convertMessage(welcomeMessage));
+            System.out.println(MessageConverter.convertMessage(welcomeMessage));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -71,7 +69,7 @@ public class ClientHandler{
                         client.sendPong();
                         pingReceived = true;
                     } else {
-                        System.out.println(Helper.convertMessage(temp));
+                        System.out.println(MessageConverter.convertMessage(temp));
                     }
                 }
             }
