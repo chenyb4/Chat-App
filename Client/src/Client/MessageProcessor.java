@@ -57,7 +57,7 @@ public class MessageProcessor {
 
         String fullMessage="";
         for (int i = 3; i <lineParts.length ; i++) {
-            fullMessage+=lineParts[i];
+            fullMessage+=lineParts[i]+" ";
         }
 
         return nameWithStar+" says to you secretly: "+fullMessage;
@@ -79,18 +79,42 @@ public class MessageProcessor {
                 //here we need to combine everything from index 2 in line part
                 // and then seperate them by comma, then by space to see who is authed
 
+
+                //OK VCC Lukman 0,Yibing 0,
+
+                //OK
+                //VCC
+                //Lukman
+                //0,Yibing
+                //0,
+
                 //namesString is a string that contain all the names
                 String namesString="";
                 for (int i = 2; i <lineParts.length ; i++) {
-                    namesString+=lineParts[i];
+                    namesString+=lineParts[i]+" ";
                 }
+                //
+               // System.out.println("nameString:"+namesString);
+
+                //nameString
+                //Lukman 0,Yibing 0,
+
                 String[] namesWithAuthInfo=namesString.split(",");
+
+                //Lukman 0 index 0
+                //Yibing 0 index 1
+                //          index 2
 
                 //false for the boolean means unauthenticated
                 HashMap<String, Boolean> authInfo=new HashMap<>();
 
-                for (int i = 0; i < namesWithAuthInfo.length; i++) {
+                for (int i = 0; i < namesWithAuthInfo.length-1; i++) {
+
+                    //i=0
                     String[] oneNameWithAuthInfo=namesWithAuthInfo[i].split(" ");
+                    //Lukman index 0
+                    // 0    index 1
+
                     if(Integer.parseInt(oneNameWithAuthInfo[1])==0){
                         //not authenticated
                         authInfo.put(oneNameWithAuthInfo[0],false);

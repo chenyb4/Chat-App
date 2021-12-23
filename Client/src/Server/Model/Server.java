@@ -63,7 +63,7 @@ public class Server {
     public void messageHandlerThread() {
         new Thread(() -> {
             Client client = new Client(clientSocket);
-            client.setFileTransferSocket(fileTransferSocket);
+            //client.setFileTransferSocket(fileTransferSocket);
             client.initializeStreams();
             clients.add(client);
             sendMessageToClient(client,"INFO welcome to chat room");
