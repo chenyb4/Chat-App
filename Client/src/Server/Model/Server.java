@@ -44,7 +44,7 @@ public class Server {
         try {
             while (true) {
                 clientSocket = serverSocket.accept();
-                //fileTransferSocket = serverSocket.accept();
+                fileTransferSocket = serverSocket.accept();
                 //Start message processing thread for every connected client
                 messageHandlerThread();
             }
@@ -63,7 +63,7 @@ public class Server {
     public void messageHandlerThread() {
         new Thread(() -> {
             Client client = new Client(clientSocket);
-            //client.setFileTransferSocket(fileTransferSocket);
+            client.setFileTransferSocket(fileTransferSocket);
             client.initializeStreams();
             clients.add(client);
             sendMessageToClient(client,"INFO welcome to chat room");
