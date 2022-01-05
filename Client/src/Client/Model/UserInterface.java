@@ -96,6 +96,16 @@ public class UserInterface {
                     System.out.println();
                 }
             }
+            case "-AU"->{
+                String password;
+                System.out.println("Please enter your password: >>");
+                password=readString();
+                try {
+                    client.authenticate(password);
+                } catch (Exception e) {
+                    System.err.println(e.getMessage());
+                }
+            }
             case "-?" -> menu();
             default -> {
                 try {
@@ -128,6 +138,7 @@ public class UserInterface {
                 "\"-EG\": to view existing groups.\n" +
                 "\"-SG\": to send a message to everyone in a certain group.\n" +
                 "\"-LG\": to leave a group.\n" +
+                "\"-AU\": to authenticate yourself.\n" +
                 "\"-Q\": to quit the chat app.\n" +
                 "\"-?\": to see this menu again.\n\n");
     }

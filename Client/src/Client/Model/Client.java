@@ -204,6 +204,11 @@ public class Client {
 
     }
 
+    public void authenticate(String password){
+        checkLogin();
+        sendMessage("AUTH"+" "+password);
+    }
+
 
     //Getters
     public BufferedReader getIn() {
