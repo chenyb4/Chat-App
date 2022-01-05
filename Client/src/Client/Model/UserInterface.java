@@ -109,7 +109,7 @@ public class UserInterface {
     }
 
     public static void menu () {
-        System.out.println("Please enter your message and hit enter to send the message to other people!");
+       /* System.out.println("Please enter your message and hit enter to send the message to other people!");
         System.out.println("If you want to see all the connected clients, please enter \"-C\".");
         System.out.println("If you want to send a private message to a certain user, please enter \"-D\".");
         System.out.println("If you want to create a group, please enter \"-G\".");
@@ -118,7 +118,18 @@ public class UserInterface {
         System.out.println("If you want to send message to a group, please enter \"-SG\".");
         System.out.println("If you want to leave a group, please enter \"-LG\".");
         System.out.println("If you want to quit, please enter \"-Q\".");
-        System.out.println("If you want to see the menu again, please enter \"-?\".");
+        System.out.println("If you want to see the menu again, please enter \"-?\".");*/
+        System.out.println("Please enter your message and hit enter to send the message to other people!\n\n"  +
+                "Or enter one of the menu items below:\n" +
+                "\"-C\": to see all the connected clients.\n" +
+                "\"-D\": to send a private message to a certain user.\n" +
+                "\"-G\": to create a group.\n" +
+                "\"-JG\": to join a group.\n" +
+                "\"-EG\": to view existing groups.\n" +
+                "\"-SG\": to send a message to everyone in a certain group.\n" +
+                "\"-LG\": to leave a group.\n" +
+                "\"-Q\": to quit the chat app.\n" +
+                "\"-?\": to see this menu again.\n\n");
     }
 
     public String readString () {
