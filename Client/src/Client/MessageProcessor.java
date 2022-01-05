@@ -23,6 +23,7 @@ public class MessageProcessor {
      * @param lineParts
      * @return
      */
+
     public static String processBCST(String[] lineParts){
         //received broadcast message
         //e.g. BCST <username> <1> <message>
@@ -51,6 +52,7 @@ public class MessageProcessor {
      * @param lineParts
      * @return
      */
+
     public static String processPM(String[] lineParts){
         //e.g. PM <username of the sender> <1> <message>
         String nameWithStar=convertNameToIncludeAuthInfo(lineParts);
@@ -69,6 +71,7 @@ public class MessageProcessor {
      * @param lineParts The line of message seperated by space and stored in array
      * @return the message returned to and handled by method convertMessage
      */
+
     public static String processServerResponseMessage(String[] lineParts){
         switch (lineParts[1]){
             case "VCC"->{
@@ -206,6 +209,7 @@ public class MessageProcessor {
      * @param nameString the string containing the names of the users or the names of the users or groups seperated by comma
      * @return Array of names
      */
+
     private static String[] convertNameString(String nameString){
         String[] lineParts=nameString.split(",");
         return lineParts;

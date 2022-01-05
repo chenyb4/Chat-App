@@ -12,7 +12,7 @@ public class Server {
     //Fields
     private ServerSocket serverSocket;
     private Socket clientSocket;
-    private Socket fileTransferSocket;
+    //private Socket fileTransferSocket;
     private List<Client> clients = new LinkedList<>();
     private List<Group> groups = new LinkedList<>();
     private final boolean SHOULD_PING = false;
@@ -50,7 +50,7 @@ public class Server {
             }
         } finally {
             clientSocket.close();
-            fileTransferSocket.close();
+            //fileTransferSocket.close();
             serverSocket.close();
             System.err.println("Unexpected error!");
         }
@@ -63,7 +63,7 @@ public class Server {
     public void messageHandlerThread() {
         new Thread(() -> {
             Client client = new Client(clientSocket);
-            client.setFileTransferSocket(fileTransferSocket);
+            //client.setFileTransferSocket(fileTransferSocket);
             client.initializeStreams();
             clients.add(client);
             sendMessageToClient(client,"INFO welcome to chat room");
@@ -243,6 +243,8 @@ public class Server {
         Client receiver = serverHandler.findClientByUsername(username,clients);
         if (receiver == null){
             sendMessageToClient(client, "ER04 User does not exist");
+        } else if (client.getUserName().equals(receiver.getUserName())){
+            sendMessageToClient(client,"ER13 Cannot send message to yourself");
         } else {
             sendMessageToClient(client,"OK " + CMD_PM + " " + client.getUserName() + " " + msg);
             receiver.out.println("PM " + client.getUserName() + " " +client.isAuthenticated() + " " + msg);
@@ -279,7 +281,7 @@ public class Server {
         } else {
             client.out.print("OK " + CMD_VCC + " ");
             client.out.flush();
-            System.out.print(">> [" + client.getUserName() + "] OK " + CMD_VCC + " ");
+            System.out.print(">> [" + client.getUserName() + " " + client.isAuthenticated() + "] OK " + CMD_VCC + " ");
             for (Client c: serverHandler.connectedClientsList(clients)) {
                 client.out.print(c);
                 client.out.flush();
@@ -302,7 +304,7 @@ public class Server {
         } else {
             client.out.print("OK " + CMD_VEG + " ");
             client.out.flush();
-            System.out.print(">> [" + client.getUserName() + "] OK " + CMD_VEG + " ");
+            System.out.print(">> [" + client.getUserName() + " " + client.isAuthenticated() + "] OK " + CMD_VEG + " ");
             for (Group g:groups) {
                 client.out.print(g);
                 client.out.flush();
@@ -449,8 +451,8 @@ public class Server {
      */
 
     public void authenticateClient (Client client, String password) {
-        if (password.length() < 6 || password.contains(" ") || password.length() > 20) {
-            sendMessageToClient(client, "ER10 Password has an invalid format (the password should be between 6 - 20 characters)");
+        if (password.length() < 6 || password.contains(" ") || password.length() > 20 || password.contains(",")) {
+            sendMessageToClient(client, "ER10 Password has an invalid format (no comma, no space, the password should be between 6 - 20 characters)");
         } else if (client.isAuth()) {
             sendMessageToClient(client,"ER11 User already authenticated");
         } else {
