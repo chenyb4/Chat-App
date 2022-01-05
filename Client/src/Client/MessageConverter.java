@@ -84,6 +84,7 @@ public class MessageConverter {
             case "ER10" -> {return "The password has an invalid format(the password should be between 6 - 20 characters)";}
             case "ER11" -> {return "You are already authenticated.";}
             case "ER12" -> {return "You cannot send an empty message.";}
+            case "ER13" -> {return "You cannot send a message to yourself.";}
             case "DSCN" -> {return "You have disconnected from the server due to inactivity.";}
             case "MSG" -> {return "You entered an invalid message.";}
             case "ER00" -> { return "There is no such command. Please enter '?' to see the manual.";}

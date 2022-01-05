@@ -69,7 +69,16 @@ public class ClientHandler{
                         client.sendPong();
                         pingReceived = true;
                     } else {
-                        System.out.println(MessageConverter.convertMessage(temp));
+                        String messageConverted=MessageConverter.convertMessage(temp);
+                        String[] lineParts=messageConverted.split(",");
+
+                        if(lineParts[0].equals("You have successfully logged in to the chat room")){
+                            System.out.println(messageConverted+"\n");
+                            UserInterface.menu();
+                        }else{
+                            System.out.println(messageConverted);
+                        }
+
                     }
                 }
             }
