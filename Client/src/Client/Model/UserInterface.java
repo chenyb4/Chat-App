@@ -30,13 +30,18 @@ public class UserInterface {
                 String message;
                 System.out.println("Please enter the username of the user you want to send the message to: >> ");
                 username=readString();
-                System.out.println("Please enter the message you want to send to "+username+": >>");
-                message=readString();
-                try {
-                    client.sendPrivateMessage(username,message);
-                } catch (Exception e) {
-                    System.err.println(e.getMessage());
+                if(username.equals(ClientHandler.myOwnUsername)){
+                    System.err.println("You cannot send a message to yourself.");
+                }else{
+                    System.out.println("Please enter the message you want to send to "+username+": >>");
+                    message=readString();
+                    try {
+                        client.sendPrivateMessage(username,message);
+                    } catch (Exception e) {
+                        System.err.println(e.getMessage());
+                    }
                 }
+
             }
             case "-G" -> {
                 String groupName;

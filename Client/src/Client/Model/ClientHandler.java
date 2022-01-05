@@ -10,6 +10,7 @@ public class ClientHandler{
 
     private boolean pingReceived = true;
     private Client client;
+    public static String myOwnUsername="";
 
     public ClientHandler(Client client) {
         this.client = client;
@@ -38,6 +39,7 @@ public class ClientHandler{
             System.out.print("Please enter your username: >> ");
             try {
                 userName = readString();
+                myOwnUsername=userName;
                 client.connectWithUserName(userName);
             }   catch (IllegalArgumentException | IOException e) {
                 System.err.println(e.getMessage());
