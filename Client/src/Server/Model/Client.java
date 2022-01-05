@@ -80,8 +80,11 @@ public class Client {
         try {
             out = new PrintWriter(clientSocket.getOutputStream());
             in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+ 
+
             //dataInputStream = new DataInputStream(fileTransferSocket.getInputStream());
             //dataOutputStream = new DataOutputStream(fileTransferSocket.getOutputStream());
+
         } catch (IOException ioe) {
             System.err.println(ioe.getMessage());
         }

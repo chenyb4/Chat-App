@@ -19,7 +19,11 @@ public class MessageConverter {
 
         //the name is being converted in a format that it lets the users know whether the sender of
         //the message is authenticated
-        String nameWithStar=MessageProcessor.convertNameToIncludeAuthInfo(lineParts);
+        //INFO Welcome to chat room
+
+            //String nameWithStar=MessageProcessor.convertNameToIncludeAuthInfo(lineParts);
+
+
 
         switch (lineParts[0]){
             case "BCST"->{
@@ -38,12 +42,14 @@ public class MessageConverter {
             case "CG"->{
                 //server tells me that some mofo created a group
                 // e.g. CG <username> <1> <group name>
+                String nameWithStar=MessageProcessor.convertNameToIncludeAuthInfo(lineParts);
                 String groupName=lineParts[3];
                 return nameWithStar+" created a group called "+groupName;
             }
             case "JG"->{
                 //server tells me that someone join a group that I am a member of
                 //e.g. JG <username> <1> <group name>
+                String nameWithStar=MessageProcessor.convertNameToIncludeAuthInfo(lineParts);
                 String groupName=lineParts[3];
                 return nameWithStar+" just entered group "+groupName+".";
             }
@@ -55,12 +61,14 @@ public class MessageConverter {
             case "AUTH" ->{
                 //server tells me that someone is autheticated
                 //e.g. AUTH <username> <1>
+                String nameWithStar=MessageProcessor.convertNameToIncludeAuthInfo(lineParts);
                 return nameWithStar+"is authenticated.";
             }
             case "LG"->{
                 //server tells me that someone left a group that I am a member of
                 //e.g. LG <username> <1> <group name>
                 String groupName=lineParts[3];
+                String nameWithStar=MessageProcessor.convertNameToIncludeAuthInfo(lineParts);
                 return nameWithStar+" left group "+groupName+".";
             }
 
