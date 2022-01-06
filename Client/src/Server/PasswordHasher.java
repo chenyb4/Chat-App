@@ -33,6 +33,7 @@ public class PasswordHasher {
     }
 
     public static boolean comparePassword (String password, String inputtedPassword) {
+        //Password is already hashed, inputted password is not
         return password.equals(toHash(inputtedPassword));
     }
 

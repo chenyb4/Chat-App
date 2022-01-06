@@ -162,20 +162,12 @@ public class Server {
         ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
         executorService.scheduleAtFixedRate(() -> {
             //Wait for 2 seconds and set received pong to false
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException ie) {
-                System.err.println(ie.getMessage());
-            }
+            sleepCurrentThread(2000);
             //Reset ReceivedPong to false
             client.setReceivedPong(false);
             sendMessageToClient(client,"PING");
             //Wait for 4 seconds for response
-            try {
-                Thread.sleep(4000);
-            } catch (InterruptedException ie) {
-                System.err.println(ie.getMessage());
-            }
+            sleepCurrentThread(4000);
             //If the client changed the status receivedPong to true within 4 seconds,
             // then the heartbeat is success, otherwise it failed
             if (client.isReceivedPong()){
@@ -206,6 +198,14 @@ public class Server {
             return new Message(lineParts[0],lineParts[1]);
         } else {
             return new Message(lineParts[0]);
+        }
+    }
+
+    public void sleepCurrentThread(int ms){
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException ie) {
+            System.err.println(ie.getMessage());
         }
     }
 
@@ -246,7 +246,7 @@ public class Server {
         } else if (client.getUserName().equals(receiver.getUserName())){
             sendMessageToClient(client,"ER13 Cannot send message to yourself");
         } else {
-            sendMessageToClient(client,"OK " + CMD_PM + " " + client.getUserName() + " " + msg);
+            sendMessageToClient(client,"OK " + CMD_PM + " " + client.getUserName() + " " + client.isAuthenticated() + " " + msg);
             receiver.out.println("PM " + client.getUserName() + " " +client.isAuthenticated() + " " + msg);
             receiver.out.flush();
         }
@@ -351,8 +351,8 @@ public class Server {
             sendMessageToClient(client,"ER09 User already joined this group");
         } else {
             Group group = serverHandler.findGroupByName(groupName,groups);
-            group.sendMessageToGroupMembersWhenJoined(client);
             group.joinClientToGroup(client);
+            group.sendMessageToGroupMembersWhenJoined(client);
             sendMessageToClient(client,"OK " + CMD_JG + " " + groupName);
         }
     }
@@ -441,6 +441,7 @@ public class Server {
         sendMessageToClient(client,"OK "+username);
         stats();
         if (SHOULD_PING){
+            //Start pinging thread for each connected client
             new Thread(() -> heartBeat(client)).start();
         }
     }
