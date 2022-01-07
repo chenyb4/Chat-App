@@ -59,7 +59,7 @@ public class ClientHandler{
         messageHandler.start();
     }
 
-    public void isMessageReceived() {
+    private void isMessageReceived() {
         try {
             String temp = "";
             boolean messageReceivedFromTheServer = client.getIn().ready();
@@ -120,7 +120,7 @@ public class ClientHandler{
         SendingMessageHandler.start();
     }
 
-    public String readString() {
+    private String readString() {
         Scanner sc = new Scanner(System.in);
         return sc.nextLine();
     }
