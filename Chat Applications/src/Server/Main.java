@@ -12,8 +12,9 @@ public class Main {
         Server server = new Server();
         try {
             server.start(port);
-        } catch (IOException io) {
-            System.err.println(io.getMessage());
+        } catch (IOException ioe) {
+            System.err.println(ioe.getMessage());
+            System.err.println("Error is starting server");
         }
     }
 }

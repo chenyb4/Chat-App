@@ -8,7 +8,7 @@ public class Client {
     private Socket clientSocket;
     private PrintWriter out;
     private BufferedReader in;
-    private String userName = "undefined";
+    private String userName = "";
     private boolean isAuth = false;
     private boolean isConnected = false;
     private boolean receivedPong = false;
@@ -24,6 +24,7 @@ public class Client {
      * @param port number
      * @throws IOException caused by Stream either input or output
      */
+
 
     public void startConnection (String ip, int port) throws IOException {
         System.out.println("Client started to port "+port);
@@ -153,6 +154,7 @@ public class Client {
      *  to join a group by group name
      * @param groupName the name of the group to join
      */
+
     public void joinGroup (String groupName) {
         //check if the user is logged in
        checkLogin();
@@ -172,7 +174,7 @@ public class Client {
     public void viewExistingGroups () {
         //check if the user is logged in
         checkLogin();
-        sendMessage("VEG");
+        sendMessage("VEG"+"\n");
     }
 
 
@@ -206,7 +208,7 @@ public class Client {
 
     public void authenticate(String password){
         checkLogin();
-        sendMessage("AUTH"+" "+password);
+        sendMessage("AUTH"+" "+password+"\n");
     }
 
 

@@ -1,5 +1,8 @@
 package Server.Model;
 
+import Server.FileTransfer.FileServer;
+import Server.FileTransfer.Transfer;
+
 import java.net.*;
 import java.io.*;
 import java.util.*;
@@ -12,11 +15,13 @@ public class Server {
     //Fields
     private ServerSocket serverSocket;
     private Socket clientSocket;
-    //private Socket fileTransferSocket;
     private List<Client> clients = new LinkedList<>();
     private List<Group> groups = new LinkedList<>();
     private final boolean SHOULD_PING = false;
-    private ServerHandler serverHandler = new ServerHandler();
+    private final ServerHandler serverHandler = new ServerHandler();
+
+    //File transfer
+    private final FileServer fileServer = new FileServer();
 
     //Commands
     private final String CMD_CONN = "CONN"; //Login
@@ -31,6 +36,9 @@ public class Server {
     private final String CMD_BCSTG = "BCSTG"; //Broadcast message to a group
     private final String CMD_AUTH = "AUTH"; //Authenticate with password
     private final String CMD_LG = "LG"; //Leave a group
+    private final String CMD_AAFT = "AAFT"; //Ask for file transfer
+    private final String CMD_RAFTA = "RAFTA"; //Accept file transfer
+    private final String CMD_RAFTR = "RAFTR"; //Reject file transfer
 
     /**
      * @param port number
@@ -39,20 +47,26 @@ public class Server {
 
     public void start(int port) throws IOException {
         serverSocket = new ServerSocket(port);
-        System.out.println("Starting server version 1.2 with port " + port + ".");
-        System.out.println("Press 'control-C' to quit the server.");
+        System.out.println("Starting server version 1.2 with port: " + port + ".");
+        new Thread(() -> {
+            try {
+                fileServer.startFileServer(5000);
+            } catch (IOException ioe) {
+                System.err.println(ioe.getMessage());
+                System.err.println("Error in starting file server");
+            }
+        }).start();
+        //System.out.println("Press 'control-C' to quit the server.");
         try {
             while (true) {
                 clientSocket = serverSocket.accept();
-                //fileTransferSocket = serverSocket.accept();
                 //Start message processing thread for every connected client
                 messageHandlerThread();
             }
         } finally {
             clientSocket.close();
-            //fileTransferSocket.close();
             serverSocket.close();
-            System.err.println("Unexpected error!");
+            System.err.println("Unexpected error in starting chat server!");
         }
     }
 
@@ -63,7 +77,6 @@ public class Server {
     public void messageHandlerThread() {
         new Thread(() -> {
             Client client = new Client(clientSocket);
-            //client.setFileTransferSocket(fileTransferSocket);
             client.initializeStreams();
             clients.add(client);
             sendMessageToClient(client,"INFO welcome to chat room");
@@ -87,7 +100,7 @@ public class Server {
      */
 
     public void clientInput (Client client,String input) {
-        Message command = parseCommand(input);
+        Message command = Message.parseCommand(input);
         String[] lineParts = command.getPayload().split(" ",2);
         System.out.println("<< [" + client.getUserName() + " " + client.isAuthenticated() + "] " + command.getType() + " " + command.getPayload());
         switch (client.getUserName()) {
@@ -102,9 +115,10 @@ public class Server {
                     case CMD_JG -> joinGroup(client,command.getPayload());
                     case CMD_VEG -> viewExistingGroups(client);
                     case CMD_PM -> {
+                        //todo: Maybe better error handling here but now all it all works perfectly fine
                         //Check if the input at least contain username and message
                         if (lineParts.length < 2){
-                            sendMessageToClient(client,"ER12 Cannot send empty message");
+                            sendMessageToClient(client,"ER00 Unknown command");
                         } else {
                             sendPrivateMessage(client,lineParts[0],lineParts[1]);
                         }
@@ -115,15 +129,94 @@ public class Server {
                     case CMD_BCSTG -> {
                         //Check if the input at least contain group name and message
                         if (lineParts.length < 2){
-                            sendMessageToClient(client,"ER12 Cannot send empty message");
+                            sendMessageToClient(client,"ER00 Unknown command");
                         } else {
                             sendMessageToGroup(client,lineParts[0],lineParts[1]);
                         }
                     }
+                    case CMD_AAFT -> {
+                        if (lineParts.length < 2) {
+                            sendMessageToClient(client,"ER00 Unknown command");
+                        } else {
+                            askClientForFileTransfer(client,lineParts[0],lineParts[1]);
+                        }
+                    }
+                    case CMD_RAFTA -> acceptFileTransfer(client,command.getPayload());
+                    case CMD_RAFTR -> rejectFileTransfer(client,command.getPayload());
                     //Other commands than these are an error
                     default -> sendMessageToClient(client,"ER00 Unknown command");
                 }
             }
+        }
+    }
+
+    /**
+     * Ask the receiving client if they want to receive the file
+     * @param sender (the sender)
+     * @param username (the receiver username)
+     * @param path of the file to be sent
+     */
+
+    public void askClientForFileTransfer (Client sender, String username, String path) {
+        File file = new File(path);
+        if (!serverHandler.userExists(username,clients)){
+            sendMessageToClient(sender,"ER04 User does not exist");
+        } else if (!file.exists() || !file.isFile()) {
+            sendMessageToClient(sender,"ER14 File does not exist");
+        } else if (sender.getUserName().equals(username)){
+            sendMessageToClient(sender,"ER15 Cannot send file to yourself");
+        } else {
+            Client receiver = serverHandler.findClientByUsername(username,clients);
+            Transfer transfer = fileServer.startThreadForFileUpload(path,sender,receiver);
+            sendMessageToClient(sender,"OK " + CMD_AAFT + " " + username + " " + path);
+            //Send to the receiver that the file is waiting your approval
+            receiver.out.println(CMD_AAFT + " " + sender.getUserName() + " " + sender.isAuthenticated() + " " + file.getName() + " " + transfer.getId());
+            receiver.out.flush();
+        }
+    }
+
+    /**
+     * Accept the file request from a certain client
+     * @param receiver of the file
+     * @param id of the transfer
+     */
+
+    public void acceptFileTransfer (Client receiver,String id) {
+        Transfer transfer = serverHandler.getTransferById(fileServer.getTransfers(),id);
+        if (transfer == null) {
+            sendMessageToClient(receiver,"ER17 Transfer id not found");
+        } else if (!transfer.getReceiver().equals(receiver)) {
+            sendMessageToClient(receiver,"ER16 No file to be received");
+        } else if (transfer.getSender().equals(receiver)){
+            sendMessageToClient(receiver,"ER15 Cannot send file to yourself");
+        } else {
+            sendMessageToClient(receiver,"OK " + CMD_RAFTA + " " + id);
+            //Send to the sender that the file is accepted
+            transfer.sendMessageToSender(CMD_RAFTA + " " + receiver.getUserName() + " " + receiver.isAuthenticated() + " " + transfer.getFile().getName() + " " + transfer.getId());
+            receiver.receiveFile(System.getProperty("user.home")+"\\"+transfer.getFile().getName(),fileServer);
+            fileServer.getTransfers().remove(transfer);
+        }
+    }
+
+    /**
+     * Reject a file request from a certain user
+     * @param receiver of the file
+     * @param id of the transfer
+     */
+
+    public void rejectFileTransfer (Client receiver, String id) {
+        Transfer transfer = serverHandler.getTransferById(fileServer.getTransfers(),id);
+        if (transfer == null){
+            sendMessageToClient(receiver,"ER17 transfer id not found");
+        } else if (!transfer.getReceiver().equals(receiver)) {
+            sendMessageToClient(receiver,"ER16 No file to be received");
+        } else if (transfer.getSender().equals(receiver)) {
+            sendMessageToClient(receiver,"ER15 Cannot send file to yourself");
+        } else {
+            sendMessageToClient(receiver, "OK " + CMD_RAFTR + " " + id);
+            //Send to the sender that the file is rejected
+            transfer.sendMessageToSender(CMD_RAFTR + " " + receiver.getUserName() + " " + receiver.isAuthenticated() + " " + transfer.getFile().getName() + " " + transfer.getId());
+            fileServer.getTransfers().remove(transfer);
         }
     }
 
@@ -175,31 +268,14 @@ public class Server {
                 System.out.println("~~ [" + client.getUserName() + " " + client.isAuthenticated() + "] Heartbeat initiated");
             } else {
                 System.out.println("~~ [" + client.getUserName() + " " + client.isAuthenticated() + "] Heartbeat expired - FAILED");
-                sendMessageToClient(client,"DCSN");
+                sendMessageToClient(client,"DCSN Pong timeout");
                 removeClient(client);
                 executorService.shutdown();
             }
         },0,11,TimeUnit.SECONDS);
     }
 
-    /**
-     * Parse the command to the desired format
-     * @param command to be parsed
-     * @return a new Message object
-     */
 
-    public Message parseCommand (String command) {
-        //Remove any extra space
-        String payload = command.trim();
-        //limit the split to 1, n-1
-        String[] lineParts = payload.split(" ",2);
-        //Return the type and payload when available
-        if (lineParts.length > 1) {
-            return new Message(lineParts[0],lineParts[1]);
-        } else {
-            return new Message(lineParts[0]);
-        }
-    }
 
     public void sleepCurrentThread(int ms){
         try {
@@ -216,7 +292,7 @@ public class Server {
      */
 
     public void leaveGroup (Client client, String groupName) {
-        if (!serverHandler.validFormat(groupName)){
+        if (!serverHandler.checkForValidFormat(groupName)){
             sendMessageToClient(client,"ER06 Group name has an invalid format");
         } else if (!serverHandler.groupExists(groupName,groups)){
             sendMessageToClient(client,"ER07 Group name does not exist");
@@ -245,9 +321,11 @@ public class Server {
             sendMessageToClient(client, "ER04 User does not exist");
         } else if (client.getUserName().equals(receiver.getUserName())){
             sendMessageToClient(client,"ER13 Cannot send message to yourself");
+        } else if (msg.equals("") || msg == null){
+            sendMessageToClient(client,"ER12 Cannot send empty message");
         } else {
-            sendMessageToClient(client,"OK " + CMD_PM + " " + client.getUserName() + " " + client.isAuthenticated() + " " + msg);
-            receiver.out.println("PM " + client.getUserName() + " " +client.isAuthenticated() + " " + msg);
+            sendMessageToClient(client,"OK " + CMD_PM + " " + receiver.getUserName() + " " + receiver.isAuthenticated() + " " + msg);
+            receiver.out.println(CMD_PM + " " + client.getUserName() + " " +client.isAuthenticated() + " " + msg);
             receiver.out.flush();
         }
     }
@@ -261,7 +339,7 @@ public class Server {
     public void checkIfLoggedIn (Message command, Client client) {
         if (!command.getType().equals(CMD_CONN)){
             sendMessageToClient(client,"ER03 Please log in first");
-        } else if (!serverHandler.validFormat(command.getPayload())){
+        } else if (!serverHandler.checkForValidFormat(command.getPayload())){
             sendMessageToClient(client, "ER02 Username has an invalid format (only characters and numbers are allowed. Space is not allowed)");
         } else if (serverHandler.userExists(command.getPayload(),clients)){
             sendMessageToClient(client, "ER01 User already logged in");
@@ -326,12 +404,19 @@ public class Server {
     public void createGroup (Client client, String groupName){
         if (serverHandler.groupExists(groupName,groups)){
             sendMessageToClient(client,"ER05 Group name already exist");
-        } else if (!serverHandler.validFormat(groupName)) {
+        } else if (!serverHandler.checkForValidFormat(groupName)) {
             sendMessageToClient(client,"ER06 Group name has an invalid format");
         } else {
             Group group = new Group(groupName);
             groups.add(group);
-            group.joinClientToGroup(client);
+            group.addClientToGroup(client);
+            //Send to connected clients that a group was created
+            for (Client c: serverHandler.connectedClientsList(clients)) {
+                if (!c.getUserName().equals(client.getUserName())) {
+                    c.out.println("CG " + client.getUserName() + " " + client.isAuthenticated() + " " + groupName);
+                    c.out.flush();
+                }
+            }
             sendMessageToClient(client,"OK " + CMD_CG + " " + groupName);
         }
     }
@@ -343,7 +428,7 @@ public class Server {
      */
 
     public void joinGroup (Client client,String groupName) {
-        if (!serverHandler.validFormat(groupName)){
+        if (!serverHandler.checkForValidFormat(groupName)){
             sendMessageToClient(client,"ER06 Group name has an invalid format");
         } else if (!serverHandler.groupExists(groupName,groups)){
             sendMessageToClient(client,"ER07 Group name does not exist");
@@ -351,7 +436,7 @@ public class Server {
             sendMessageToClient(client,"ER09 User already joined this group");
         } else {
             Group group = serverHandler.findGroupByName(groupName,groups);
-            group.joinClientToGroup(client);
+            group.addClientToGroup(client);
             group.sendMessageToGroupMembersWhenJoined(client);
             sendMessageToClient(client,"OK " + CMD_JG + " " + groupName);
         }
@@ -414,10 +499,12 @@ public class Server {
      */
 
     public void sendMessageToGroup (Client client, String groupName, String message) {
-        if (!serverHandler.validFormat(groupName)) {
+        if (!serverHandler.checkForValidFormat(groupName)) {
             sendMessageToClient(client,"ER06 Group name has an invalid format");
         } else if (!serverHandler.groupExists(groupName,groups)){
             sendMessageToClient(client, "ER07 Group name does not exist");
+        } else if (message.equals("") || message == null){
+            sendMessageToClient(client,"ER12 Cannot send empty message");
         } else {
             Group group = serverHandler.findGroupByName(groupName,groups);
             if (!group.checkClientInGroup(client.getUserName(),groupName)) {

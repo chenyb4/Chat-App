@@ -4,18 +4,24 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class Group {
+
     private String name = "";
     private List<Client> clients;
 
-    public Group(String groupName) {
+    //Constructor
+    public Group (String groupName) {
         this.name = groupName;
         this.clients = new LinkedList<>();
     }
 
-    public String getName() {
-        return name;
-    }
+    /**
+     * Check if the client exist in a particular group
+     * @param username of teh client
+     * @param groupName that needs to be checked
+     * @return true if teh client exist in that group, otherwise false
+     */
 
+    //Methods
     public boolean checkClientInGroup (String username,String groupName) {
         boolean result = false;
         for (Client c: clients) {
@@ -27,11 +33,11 @@ public class Group {
         return result;
     }
 
-    public void joinClientToGroup (Client client) {
-        clients.add(client);
-    }
+    /**
+     * @param client that joined the group
+     */
 
-    public void sendMessageToGroupMembersWhenJoined(Client client){
+    public void sendMessageToGroupMembersWhenJoined (Client client) {
         for (Client c:clients) {
             if (!c.getUserName().equals(client.getUserName())) {
                 c.out.println("JG " + client.getUserName() + " " + client.isAuthenticated() + " " + name);
@@ -40,7 +46,11 @@ public class Group {
         }
     }
 
-    public void sendMessageToGroupMembersWhenLeft(Client client){
+    /**
+     * @param client that want to leave a group
+     */
+
+    public void sendMessageToGroupMembersWhenLeft (Client client) {
         for (Client c:clients) {
             if (!c.getUserName().equals(client.getUserName())) {
                 c.out.println("LG " + client.getUserName() + " " + client.isAuthenticated() + " " + name);
@@ -48,6 +58,12 @@ public class Group {
             }
         }
     }
+
+    /**
+     * Send a message to group members
+     * @param client who is teh sender if the message
+     * @param message to be sent
+     */
 
     public void sendMessageToGroupMembers (Client client,String message) {
         for (Client c:clients) {
@@ -58,10 +74,20 @@ public class Group {
         }
     }
 
+    public void addClientToGroup(Client client) {
+        clients.add(client);
+    }
+
     public void removeClientFromGroup (Client client) {
         clients.remove(client);
     }
 
+    //Getter
+    public String getName() {
+        return name;
+    }
+
+    //To String
     @Override
     public String toString() {
         return name + ",";
