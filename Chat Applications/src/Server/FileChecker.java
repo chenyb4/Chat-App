@@ -8,6 +8,7 @@ import java.security.NoSuchAlgorithmException;
 
 public class FileChecker {
 
+    // TODO: 11-Jan-22 To be reviewed and checked 
     public static byte[] checkFile (FileInputStream fs) {
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");

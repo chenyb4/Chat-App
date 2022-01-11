@@ -103,7 +103,7 @@ public class UserInterface {
             }
             case "-AU"->{
                 String password;
-                System.out.println("Please enter your password: >>");
+                System.out.println("Please enter your password: >> ");
                 password=readString();
                 try {
                     client.authenticate(password);
