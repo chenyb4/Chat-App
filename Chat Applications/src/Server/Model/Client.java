@@ -1,8 +1,9 @@
 package Server.Model;
 
 import Server.FileTransfer.FileServer;
+import Server.FileTransfer.Transfer;
 import Server.PasswordHasher;
-
+import Server.FileChecker;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -58,22 +59,34 @@ public class Client {
     /**
      * Receive file from the file server
      * @param placeToStore where the file will be stored
+     * Implementation of checksum will also be implemented here
      */
 
-    public void receiveFile(String placeToStore,FileServer fileServer) {
-        byte[] contents = new byte[10000];
+    public void receiveFile(String placeToStore, FileServer fileServer, Transfer transfer) {
+        //This array should have the length of the file size
+        byte[] contents = new byte[(int) transfer.getFile().length()];
         try {
             Socket s = fileServer.getFileClientSocket();
             InputStream is = s.getInputStream();
-            FileOutputStream fo = new FileOutputStream(placeToStore,true);
+            FileOutputStream fo = new FileOutputStream(placeToStore);
             is.read(contents,0,contents.length);
             fo.write(contents,0, contents.length);
-            System.out.println("\u001B[32m"+"File: [ "+ placeToStore +" ] was stored successfully"+"\u001B[0m");
-            out.println("File is stored in: " + placeToStore);
-            out.flush();
+            String checksumToBeChecked = FileChecker.getFileChecksum(placeToStore);
+            System.out.println(checksumToBeChecked);
+            if (FileChecker.compareChecksum(transfer.getChecksum(),checksumToBeChecked)) {
+                System.out.println("\u001B[32m"+"File: [ "+ placeToStore +" ] was stored successfully"+"\u001B[0m");
+                out.println("File is stored in: " + placeToStore);
+                out.flush();
+            } else {
+                System.out.println("\u001B[32m"+"File: [ "+ placeToStore +" ] was corrupted during transmission"+"\u001B[0m");
+                out.println("File is corrupted");
+                out.flush();
+            }
         } catch (IOException io) {
             System.err.println(io.getMessage());
             System.err.println("Error in receiving file");
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
         }
     }
 

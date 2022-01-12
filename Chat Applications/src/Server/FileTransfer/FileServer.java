@@ -46,7 +46,7 @@ public class FileServer {
      * @param receiver of the file
      */
 
-    public Transfer startThreadForFileUpload(String path, Client sender, Client receiver) {
+    public Transfer transferHandler(String path, Client sender, Client receiver) {
         Transfer transfer = new Transfer(sender,receiver);
         Thread fileHandler = new Thread(() -> {
             System.out.println(COLOR_GREEN +">> [" + sender.getUserName() + " " + sender.isAuthenticated() + "] uploaded: " + path+ COLOR_RESET);

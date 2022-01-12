@@ -1,5 +1,6 @@
 package Server.FileTransfer;
 
+import Server.FileChecker;
 import Server.Model.Client;
 
 import java.io.File;
@@ -20,6 +21,8 @@ public class Transfer {
     private final Client receiver;
     private String id;
     private File file;
+    private String checksum;
+    //Generating and incrementing id
     private static final AtomicInteger count = new AtomicInteger(0);
 
     //Constructor
@@ -36,8 +39,8 @@ public class Transfer {
 
     //Methods
     public void uploadToServer (String path) {
-        file = new File(path);
-        byte[] contents = new byte[10000];
+        this.file = new File(path);
+        byte[] contents = new byte[(int) file.length()];
         try {
             Socket s = new Socket(InetAddress.getByName("localhost"),5000);
             FileInputStream fis = new FileInputStream(file);
@@ -61,6 +64,17 @@ public class Transfer {
         sender.out.flush();
     }
 
+    /**
+     * Send a message to the sender client
+     * @param msg to be sent
+     */
+
+    public void sendMessageToReceiver (String msg){
+        receiver.out.println(msg);
+        receiver.out.flush();
+    }
+
+    //Getters
     public Client getReceiver() {
         return receiver;
     }
@@ -75,5 +89,14 @@ public class Transfer {
 
     public String getId() {
         return id;
+    }
+
+    public String getChecksum() {
+        return checksum;
+    }
+
+    //Setters
+    public void setChecksum(String checksum) {
+        this.checksum = checksum;
     }
 }

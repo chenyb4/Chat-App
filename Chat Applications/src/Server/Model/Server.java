@@ -2,7 +2,7 @@ package Server.Model;
 
 import Server.FileTransfer.FileServer;
 import Server.FileTransfer.Transfer;
-
+import Server.FileChecker;
 import java.net.*;
 import java.io.*;
 import java.util.*;
@@ -23,7 +23,7 @@ public class Server {
     //File transfer
     private final FileServer fileServer = new FileServer();
 
-    //Commands
+    //Commands todo: Maybe use enum class for this
     private final String CMD_CONN = "CONN"; //Login
     private final String CMD_BCST = "BCST"; //Broadcast message
     private final String CMD_PONG = "PONG"; //Pong to server
@@ -138,7 +138,11 @@ public class Server {
                         if (lineParts.length < 2) {
                             sendMessageToClient(client,"ER00 Unknown command");
                         } else {
-                            askClientForFileTransfer(client,lineParts[0],lineParts[1]);
+                            try {
+                                askClientForFileTransfer(client,lineParts[0],lineParts[1]);
+                            } catch (Exception e) {
+                                System.err.println(e.getMessage());
+                            }
                         }
                     }
                     case CMD_RAFTA -> acceptFileTransfer(client,command.getPayload());
@@ -157,21 +161,23 @@ public class Server {
      * @param path of the file to be sent
      */
 
-    public void askClientForFileTransfer (Client sender, String username, String path) {
-        File file = new File(path);
+    public void askClientForFileTransfer (Client sender, String username, String path) throws Exception {
         if (!serverHandler.userExists(username,clients)){
             sendMessageToClient(sender,"ER04 User does not exist");
-        } else if (!file.exists() || !file.isFile()) {
+            //To check if the file does exist
+        } else if (!new File(path).exists() || !new File(path).isFile()) {
             sendMessageToClient(sender,"ER14 File does not exist");
         } else if (sender.getUserName().equals(username)){
             sendMessageToClient(sender,"ER15 Cannot send file to yourself");
         } else {
             Client receiver = serverHandler.findClientByUsername(username,clients);
-            Transfer transfer = fileServer.startThreadForFileUpload(path,sender,receiver);
+            Transfer transfer = fileServer.transferHandler(path,sender,receiver);
+            String checksum = FileChecker.getFileChecksum(path);
+            transfer.setChecksum(checksum);
+            System.out.println(checksum);
             sendMessageToClient(sender,"OK " + CMD_AAFT + " " + username + " " + path);
             //Send to the receiver that the file is waiting your approval
-            receiver.out.println(CMD_AAFT + " " + sender.getUserName() + " " + sender.isAuthenticated() + " " + file.getName() + " " + transfer.getId());
-            receiver.out.flush();
+            transfer.sendMessageToReceiver(CMD_AAFT + " " + sender.getUserName() + " " + sender.isAuthenticated() + " " + transfer.getFile().getName() + " " + transfer.getId());
         }
     }
 
@@ -186,6 +192,7 @@ public class Server {
         if (transfer == null) {
             sendMessageToClient(receiver,"ER17 Transfer id not found");
         } else if (!transfer.getReceiver().equals(receiver)) {
+            //File is not for this client
             sendMessageToClient(receiver,"ER16 No file to be received");
         } else if (transfer.getSender().equals(receiver)){
             sendMessageToClient(receiver,"ER15 Cannot send file to yourself");
@@ -193,7 +200,7 @@ public class Server {
             sendMessageToClient(receiver,"OK " + CMD_RAFTA + " " + id);
             //Send to the sender that the file is accepted
             transfer.sendMessageToSender(CMD_RAFTA + " " + receiver.getUserName() + " " + receiver.isAuthenticated() + " " + transfer.getFile().getName() + " " + transfer.getId());
-            receiver.receiveFile(System.getProperty("user.home")+"\\"+transfer.getFile().getName(),fileServer);
+            receiver.receiveFile(System.getProperty("user.home")+"\\"+transfer.getFile().getName(),fileServer,transfer);
             fileServer.getTransfers().remove(transfer);
         }
     }
@@ -209,6 +216,7 @@ public class Server {
         if (transfer == null){
             sendMessageToClient(receiver,"ER17 transfer id not found");
         } else if (!transfer.getReceiver().equals(receiver)) {
+            //File is not for this client
             sendMessageToClient(receiver,"ER16 No file to be received");
         } else if (transfer.getSender().equals(receiver)) {
             sendMessageToClient(receiver,"ER15 Cannot send file to yourself");
@@ -470,6 +478,7 @@ public class Server {
     public void removeClient (Client client) {
         clients.remove(client);
         for (Group g:groups) {
+            //Also remove the client from all the groups
             g.sendMessageToGroupMembersWhenLeft(client);
             g.removeClientFromGroup(client);
         }
