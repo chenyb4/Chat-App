@@ -2,7 +2,6 @@ package Server.Data;
 
 import Server.Model.Client;
 import Server.PasswordHasher;
-
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -10,8 +9,6 @@ import java.util.List;
 public class DataProvider {
 
     public static List<Client> listClients = new LinkedList<>();
-
-    // TODO: 11-Jan-22 Use the static data
 
     static {
         listClients.add(new Client("Lukman", PasswordHasher.toHash("123456"))); //123456
