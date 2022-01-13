@@ -560,10 +560,10 @@ public class Server {
             sendMessageToClient(c,"ER18 Incorrect password");
         } else {
             c.setAuth(true);
-            for (Client cc: serverHandler.connectedClientsList(clients)) {
-                if (!cc.getUserName().equals(cc.getUserName())) {
-                    cc.out.println("AUTH " + cc.getUserName() + " " + cc.isAuthenticated());
-                    cc.out.flush();
+            for (Client clients: serverHandler.connectedClientsList(clients)) {
+                if (!clients.getUserName().equals(c.getUserName())) {
+                    clients.out.println("AUTH " + clients.getUserName() + " " + clients.isAuthenticated());
+                    clients.out.flush();
                 }
             }
             sendMessageToClient(c,"OK " + CMD_AUTH + " " + password);
