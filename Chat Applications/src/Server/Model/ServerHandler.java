@@ -121,7 +121,7 @@ public class ServerHandler {
     public Client getClientFormDataProvider (Client c) {
         for (Client client: DataProvider.listClients) {
             if (client.getUserName().equals(c.getUserName())){
-                return c;
+                return client;
             }
         }
         return null;
