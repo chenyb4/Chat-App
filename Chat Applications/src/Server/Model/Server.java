@@ -19,7 +19,7 @@ public class Server {
     private Socket clientSocket;
     private List<Client> clients = new LinkedList<>();
     private List<Group> groups = new LinkedList<>();
-    private final boolean SHOULD_PING = false;
+    private final boolean SHOULD_PING = true;
     private final ServerHandler serverHandler = new ServerHandler();
 
     //File transfer
@@ -562,7 +562,7 @@ public class Server {
             c.setAuth(true);
             for (Client clients: serverHandler.connectedClientsList(clients)) {
                 if (!clients.getUserName().equals(c.getUserName())) {
-                    clients.out.println("AUTH " + clients.getUserName() + " " + clients.isAuthenticated());
+                    clients.out.println("AUTH " + c.getUserName() + " " + c.isAuthenticated());
                     clients.out.flush();
                 }
             }

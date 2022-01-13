@@ -62,7 +62,7 @@ public class MessageConverter {
                 //server tells me that someone is autheticated
                 //e.g. AUTH <username> <1>
                 String nameWithStar=MessageProcessor.convertNameToIncludeAuthInfo(lineParts);
-                return nameWithStar+"is authenticated.";
+                return nameWithStar+" is authenticated.";
             }
             case "LG"->{
                 //server tells me that someone left a group that I am a member of
