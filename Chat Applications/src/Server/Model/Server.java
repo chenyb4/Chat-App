@@ -19,7 +19,7 @@ public class Server {
     private Socket clientSocket;
     private List<Client> clients = new LinkedList<>();
     private List<Group> groups = new LinkedList<>();
-    private final boolean SHOULD_PING = true;
+    private final boolean SHOULD_PING = false;
     private final ServerHandler serverHandler = new ServerHandler();
 
     //File transfer
@@ -556,7 +556,7 @@ public class Server {
             sendMessageToClient(c, "ER10 Password has an invalid format (no comma, no space, the password should be between 6 - 20 characters)");
         } else if (c.isAuth()) {
             sendMessageToClient(c,"ER11 User already authenticated");
-        } else if (!client.getPassword().equals(PasswordHasher.toHash(password))) {
+        } else if (!PasswordHasher.comparePassword(client.getPassword(),password)) {
             sendMessageToClient(c,"ER18 Incorrect password");
         } else {
             c.setAuth(true);

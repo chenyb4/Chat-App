@@ -9,6 +9,14 @@ import java.security.spec.InvalidKeySpecException;
 
 public class PasswordHasher {
 
+    /**
+     * @param password to be hashed
+     * @param salt rounds
+     * @param iterations rounds
+     * @param keyLength of the password
+     * @return the bytes which is encoded
+     */
+
     private static byte[] hashPassword (final char[] password, final byte[] salt, final int iterations, final int keyLength) {
         try {
             SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512");
@@ -21,6 +29,12 @@ public class PasswordHasher {
         return null;
     }
 
+    /**
+     * Convert from bytes to hex
+     * @param array of bytes to be converted from
+     * @return hex string
+     */
+
     private static String toHex (byte[] array) {
         BigInteger bi = new BigInteger(1, array);
         String hex = bi.toString(16);
@@ -32,10 +46,11 @@ public class PasswordHasher {
         }
     }
 
-    public static boolean comparePassword (String password, String inputtedPassword) {
-        //Password is already hashed, inputted password is not
-        return password.equals(toHash(inputtedPassword));
-    }
+    /**
+     * Hash the password
+     * @param password to be hashed
+     * @return String as a hash
+     */
 
     public static String toHash(String password) {
         int iterations = 65536;
@@ -44,5 +59,17 @@ public class PasswordHasher {
         byte[] saltBytes = new byte[16];
         byte[] hashedBytes = hashPassword(passwordChars, saltBytes, iterations, keyLength);
         return toHex(hashedBytes);
+    }
+
+    /**
+     * Compare the passwords
+     * @param password old password
+     * @param inputtedPassword new password
+     * @return true if it does match, otherwise false
+     */
+
+    public static boolean comparePassword (String password, String inputtedPassword) {
+        //Password is already hashed, inputted password is not
+        return password.equals(toHash(inputtedPassword));
     }
 }
