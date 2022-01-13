@@ -1,8 +1,10 @@
 package Server.Model;
 
+import Server.Data.DataProvider;
 import Server.FileTransfer.FileServer;
 import Server.FileTransfer.Transfer;
 import Server.FileChecker;
+import Server.PasswordHasher;
 import java.net.*;
 import java.io.*;
 import java.util.*;
@@ -174,7 +176,6 @@ public class Server {
             Transfer transfer = fileServer.transferHandler(path,sender,receiver);
             String checksum = FileChecker.getFileChecksum(path);
             transfer.setChecksum(checksum);
-            System.out.println(checksum);
             sendMessageToClient(sender,"OK " + CMD_AAFT + " " + username + " " + path);
             //Send to the receiver that the file is waiting your approval
             transfer.sendMessageToReceiver(CMD_AAFT + " " + sender.getUserName() + " " + sender.isAuthenticated() + " " + transfer.getFile().getName() + " " + transfer.getId());
@@ -543,25 +544,29 @@ public class Server {
     }
 
     /**
-     * @param client who wants to authenticate him/her self
+     * @param c who wants to authenticate him/her self
      * @param password to be stored
      */
 
-    public void authenticateClient (Client client, String password) {
-        if (password.length() < 6 || password.contains(" ") || password.length() > 20 || password.contains(",")) {
-            sendMessageToClient(client, "ER10 Password has an invalid format (no comma, no space, the password should be between 6 - 20 characters)");
-        } else if (client.isAuth()) {
-            sendMessageToClient(client,"ER11 User already authenticated");
+    public void authenticateClient (Client c, String password) {
+        Client client = serverHandler.getClientFormDataProvider(c);
+        if (client == null){
+            sendMessageToClient(c,"ER19 Credentials not found on the server and cannot authenticate");
+        } else if (password.length() < 6 || password.contains(" ") || password.length() > 20 || password.contains(",")) {
+            sendMessageToClient(c, "ER10 Password has an invalid format (no comma, no space, the password should be between 6 - 20 characters)");
+        } else if (c.isAuth()) {
+            sendMessageToClient(c,"ER11 User already authenticated");
+        } else if (!client.getPassword().equals(PasswordHasher.toHash(password))) {
+            sendMessageToClient(c,"ER18 Incorrect password");
         } else {
-            client.setAuth(true);
-            client.setPassword(password);
-            for (Client c: serverHandler.connectedClientsList(clients)) {
-                if (!c.getUserName().equals(client.getUserName())) {
-                    c.out.println("AUTH " + client.getUserName() + " " + client.isAuthenticated());
-                    c.out.flush();
+            c.setAuth(true);
+            for (Client cc: serverHandler.connectedClientsList(clients)) {
+                if (!cc.getUserName().equals(cc.getUserName())) {
+                    cc.out.println("AUTH " + cc.getUserName() + " " + cc.isAuthenticated());
+                    cc.out.flush();
                 }
             }
-            sendMessageToClient(client,"OK " + CMD_AUTH + " " + password);
+            sendMessageToClient(c,"OK " + CMD_AUTH + " " + password);
         }
     }
 }
