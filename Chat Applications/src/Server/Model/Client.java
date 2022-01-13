@@ -72,7 +72,6 @@ public class Client {
             is.read(contents,0,contents.length);
             fo.write(contents,0, contents.length);
             String checksumToBeChecked = FileChecker.getFileChecksum(placeToStore);
-            System.out.println(checksumToBeChecked);
             if (FileChecker.compareChecksum(transfer.getChecksum(),checksumToBeChecked)) {
                 System.out.println("\u001B[32m"+"File: [ "+ placeToStore +" ] was stored successfully"+"\u001B[0m");
                 out.println("File is stored in: " + placeToStore);
@@ -120,6 +119,10 @@ public class Client {
         return receivedPong;
     }
 
+    public String getPassword() {
+        return password;
+    }
+
     //Setters
     public void setConnected(boolean connected) {
         isConnected = connected;
@@ -135,10 +138,6 @@ public class Client {
 
     public void setReceivedPong(boolean receivedPong) {
         this.receivedPong = receivedPong;
-    }
-
-    public void setPassword(String password) {
-        this.password = PasswordHasher.toHash(password);
     }
 
     //To String

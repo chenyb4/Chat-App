@@ -14,7 +14,6 @@ public class FileChecker {
      * @throws Exception wrong algorithm or io exception
      */
 
-    //This is correct
     public static String getFileChecksum (String filePath) throws Exception {
         MessageDigest md = MessageDigest.getInstance("MD5");
         // file hashing with DigestInputStream

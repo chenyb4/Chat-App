@@ -1,5 +1,6 @@
 package Server.Model;
 
+import Server.Data.DataProvider;
 import Server.FileTransfer.Transfer;
 
 import java.util.ArrayList;
@@ -112,6 +113,15 @@ public class ServerHandler {
         for (Transfer t:transfers) {
             if (t.getId().equals(id)){
                 return t;
+            }
+        }
+        return null;
+    }
+
+    public Client getClientFormDataProvider (Client c) {
+        for (Client client: DataProvider.listClients) {
+            if (client.getUserName().equals(c.getUserName())){
+                return c;
             }
         }
         return null;
