@@ -11,6 +11,7 @@ public class DataProvider {
     public static List<Client> listClients = new LinkedList<>();
 
     static {
+        //Passwords stored in hashes
         listClients.add(new Client("Lukman", PasswordHasher.toHash("123456"))); //123456
         listClients.add(new Client("Yibing", PasswordHasher.toHash("123456Yc"))); //123456Yc
         listClients.add(new Client("John", PasswordHasher.toHash("123456J"))); //123456J

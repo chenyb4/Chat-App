@@ -1,6 +1,5 @@
 package Server.Model;
 
-import Server.Data.DataProvider;
 import Server.FileTransfer.FileServer;
 import Server.FileTransfer.Transfer;
 import Server.FileChecker;
@@ -25,7 +24,7 @@ public class Server {
     //File transfer
     private final FileServer fileServer = new FileServer();
 
-    //Commands todo: Maybe use enum class for this
+    //Commands
     private final String CMD_CONN = "CONN"; //Login
     private final String CMD_BCST = "BCST"; //Broadcast message
     private final String CMD_PONG = "PONG"; //Pong to server
@@ -117,7 +116,6 @@ public class Server {
                     case CMD_JG -> joinGroup(client,command.getPayload());
                     case CMD_VEG -> viewExistingGroups(client);
                     case CMD_PM -> {
-                        //todo: Maybe better error handling here but now all it all works perfectly fine
                         //Check if the input at least contain username and message
                         if (lineParts.length < 2){
                             sendMessageToClient(client,"ER00 Unknown command");
@@ -137,6 +135,7 @@ public class Server {
                         }
                     }
                     case CMD_AAFT -> {
+                        //Check if the command does contain at least username and path
                         if (lineParts.length < 2) {
                             sendMessageToClient(client,"ER00 Unknown command");
                         } else {
@@ -176,6 +175,7 @@ public class Server {
             Transfer transfer = fileServer.transferHandler(path,sender,receiver);
             String checksum = FileChecker.getFileChecksum(path);
             transfer.setChecksum(checksum);
+            sender.setActive(true);
             sendMessageToClient(sender,"OK " + CMD_AAFT + " " + username + " " + path);
             //Send to the receiver that the file is waiting your approval
             transfer.sendMessageToReceiver(CMD_AAFT + " " + sender.getUserName() + " " + sender.isAuthenticated() + " " + transfer.getFile().getName() + " " + transfer.getId());
@@ -198,10 +198,13 @@ public class Server {
         } else if (transfer.getSender().equals(receiver)){
             sendMessageToClient(receiver,"ER15 Cannot send file to yourself");
         } else {
+            receiver.setActive(true);
             sendMessageToClient(receiver,"OK " + CMD_RAFTA + " " + id);
             //Send to the sender that the file is accepted
             transfer.sendMessageToSender(CMD_RAFTA + " " + receiver.getUserName() + " " + receiver.isAuthenticated() + " " + transfer.getFile().getName() + " " + transfer.getId());
+            //The destination is always in user home
             receiver.receiveFile(System.getProperty("user.home")+"\\"+transfer.getFile().getName(),fileServer,transfer);
+            //Remove from the transfer from teh transfer list, so it can be downloaded once
             fileServer.getTransfers().remove(transfer);
         }
     }
@@ -222,9 +225,11 @@ public class Server {
         } else if (transfer.getSender().equals(receiver)) {
             sendMessageToClient(receiver,"ER15 Cannot send file to yourself");
         } else {
+            receiver.setActive(true);
             sendMessageToClient(receiver, "OK " + CMD_RAFTR + " " + id);
             //Send to the sender that the file is rejected
             transfer.sendMessageToSender(CMD_RAFTR + " " + receiver.getUserName() + " " + receiver.isAuthenticated() + " " + transfer.getFile().getName() + " " + transfer.getId());
+            //Remove the transfer from the transfers list
             fileServer.getTransfers().remove(transfer);
         }
     }
@@ -284,7 +289,10 @@ public class Server {
         },0,11,TimeUnit.SECONDS);
     }
 
-
+    /**
+     * Sleep the thread
+     * @param ms is for how many millie seconds
+     */
 
     public void sleepCurrentThread(int ms){
         try {
@@ -312,6 +320,7 @@ public class Server {
             } else {
                 group.removeClientFromGroup(client);
                 group.sendMessageToGroupMembersWhenLeft(client);
+                client.setActive(true);
                 sendMessageToClient(client,"OK " + CMD_LG + " " + groupName);
             }
         }
@@ -333,6 +342,7 @@ public class Server {
         } else if (msg.equals("") || msg == null){
             sendMessageToClient(client,"ER12 Cannot send empty message");
         } else {
+            client.setActive(true);
             sendMessageToClient(client,"OK " + CMD_PM + " " + receiver.getUserName() + " " + receiver.isAuthenticated() + " " + msg);
             receiver.out.println(CMD_PM + " " + client.getUserName() + " " +client.isAuthenticated() + " " + msg);
             receiver.out.flush();
@@ -366,6 +376,7 @@ public class Server {
         if (clients.size() < 1) {
             sendMessageToClient(client,"OK " + CMD_VCC + " " + "");
         } else {
+            client.setActive(true);
             client.out.print("OK " + CMD_VCC + " ");
             client.out.flush();
             System.out.print(">> [" + client.getUserName() + " " + client.isAuthenticated() + "] OK " + CMD_VCC + " ");
@@ -389,6 +400,7 @@ public class Server {
         if (groups.size() < 1){
             sendMessageToClient(client,"OK " + CMD_VEG + " " + "");
         } else {
+            client.setActive(true);
             client.out.print("OK " + CMD_VEG + " ");
             client.out.flush();
             System.out.print(">> [" + client.getUserName() + " " + client.isAuthenticated() + "] OK " + CMD_VEG + " ");
@@ -426,6 +438,7 @@ public class Server {
                     c.out.flush();
                 }
             }
+            client.setActive(true);
             sendMessageToClient(client,"OK " + CMD_CG + " " + groupName);
         }
     }
@@ -446,8 +459,9 @@ public class Server {
         } else {
             Group group = serverHandler.findGroupByName(groupName,groups);
             group.addClientToGroup(client);
-            group.sendMessageToGroupMembersWhenJoined(client);
+            client.setActive(true);
             sendMessageToClient(client,"OK " + CMD_JG + " " + groupName);
+            group.sendMessageToGroupMembersWhenJoined(client);
         }
     }
 
@@ -478,6 +492,7 @@ public class Server {
 
     public void removeClient (Client client) {
         clients.remove(client);
+        client.setActive(false);
         for (Group g:groups) {
             //Also remove the client from all the groups
             g.sendMessageToGroupMembersWhenLeft(client);
@@ -498,6 +513,7 @@ public class Server {
                 sendMessageToClient(c,CMD_BCST + " " + client.getUserName() + " " + client.isAuthenticated() + " " + message);
             }
         }
+        client.setActive(true);
         sendMessageToClient(client,"OK " + CMD_BCST + " " + message);
     }
 
@@ -520,6 +536,7 @@ public class Server {
             if (!group.checkClientInGroup(client.getUserName(),groupName)) {
                 sendMessageToClient(client,"ER08 Please join the group first");
             } else {
+                client.setActive(true);
                 group.sendMessageToGroupMembers(client,message);
                 sendMessageToClient(client,"OK " + CMD_BCSTG + " " + groupName + " " + message);
             }
@@ -535,12 +552,16 @@ public class Server {
         client.setUserName(username);
         client.setConnected(true);
         client.setReceivedPong(false);
+        client.setActive(true);
         sendMessageToClient(client,"OK "+username);
         stats();
         if (SHOULD_PING){
             //Start pinging thread for each connected client
             new Thread(() -> heartBeat(client)).start();
         }
+        //Check if the user is not active
+        //todo: check if new thread should be started.
+        new Thread(() -> checkClientIfIdle(client)).start();
     }
 
     /**
@@ -560,6 +581,7 @@ public class Server {
             sendMessageToClient(c,"ER18 Incorrect password");
         } else {
             c.setAuth(true);
+            c.setActive(true);
             for (Client clients: serverHandler.connectedClientsList(clients)) {
                 if (!clients.getUserName().equals(c.getUserName())) {
                     clients.out.println("AUTH " + c.getUserName() + " " + c.isAuthenticated());
@@ -568,5 +590,39 @@ public class Server {
             }
             sendMessageToClient(c,"OK " + CMD_AUTH + " " + password);
         }
+    }
+
+    /**
+     * @param client to be checked for idle
+     * todo: check if only for sending messages to a group or all messages
+     */
+
+    public void checkClientIfIdle (Client client) {
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            //2 min = 120 sec
+            int temp = 120;
+            @Override
+            public void run() {
+                if (client.isActive()) {
+                    //Reset to 2 min
+                    temp = 120;
+                } else {
+                    temp--;
+                }
+                client.setActive(false);
+                if (temp == 0){
+                    for (Group g:groups) {
+                        g.removeClientFromGroup(client);
+                    }
+                    System.out.println("["+client.getUserName() + " " + client.isAuthenticated()+"] was idle for more than 2 min");
+                    System.out.println("["+client.getUserName() + " " + client.isAuthenticated()+"] was removed from all the groups");
+                    client.out.println("You were idle for more than 2 minutes, removing you from all the groups.");
+                    client.out.flush();
+                    timer.cancel();
+                }
+            }
+            //Run every second
+        },0,1000);
     }
 }
