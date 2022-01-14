@@ -18,6 +18,7 @@ public class Client {
     private boolean isAuth = false;
     private boolean isConnected = false;
     private boolean receivedPong = false;
+    private boolean active = false;
 
     //Constructors
     public Client(Socket clientSocket) {
@@ -123,6 +124,10 @@ public class Client {
         return password;
     }
 
+    public boolean isActive() {
+        return active;
+    }
+
     //Setters
     public void setConnected(boolean connected) {
         isConnected = connected;
@@ -138,6 +143,10 @@ public class Client {
 
     public void setReceivedPong(boolean receivedPong) {
         this.receivedPong = receivedPong;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     //To String

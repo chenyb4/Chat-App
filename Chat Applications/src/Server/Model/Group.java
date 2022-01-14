@@ -7,11 +7,13 @@ public class Group {
 
     private String name = "";
     private List<Client> clients;
+    private List<Message> messages;
 
     //Constructor
     public Group (String groupName) {
         this.name = groupName;
         this.clients = new LinkedList<>();
+        this.messages = new LinkedList<>();
     }
 
     /**
@@ -44,6 +46,11 @@ public class Group {
                 c.out.flush();
             }
         }
+        //All messages send to this group can be viewed by this client
+        for (Message m:messages) {
+            client.out.println(m.getType());
+            client.out.flush();
+        }
     }
 
     /**
@@ -72,6 +79,8 @@ public class Group {
                 c.out.flush();
             }
         }
+        //todo: can be better message
+        messages.add(new Message("BCSTG " + client.getUserName() + " " + client.isAuthenticated() + " " + name + " " + message));
     }
 
     public void addClientToGroup(Client client) {
