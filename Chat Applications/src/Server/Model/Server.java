@@ -4,6 +4,7 @@ import Server.FileTransfer.FileServer;
 import Server.FileTransfer.Transfer;
 import Server.FileChecker;
 import Server.PasswordHasher;
+import Server.MessageEncryptor;
 import java.net.*;
 import java.io.*;
 import java.util.*;
@@ -343,9 +344,11 @@ public class Server {
             sendMessageToClient(client,"ER12 Cannot send empty message");
         } else {
             client.setActive(true);
-            sendMessageToClient(client,"OK " + CMD_PM + " " + receiver.getUserName() + " " + receiver.isAuthenticated() + " " + msg);
-            receiver.out.println(CMD_PM + " " + client.getUserName() + " " +client.isAuthenticated() + " " + msg);
-            receiver.out.flush();
+            //Encrypt with receiver's public key
+            String encryptedMessage = MessageEncryptor.encrypt(receiver.getPublicKey(),CMD_PM + " " + client.getUserName() + " " + client.isAuthenticated() + " " + msg);
+            //Check this
+            sendMessageToClient(client,"OK " + CMD_PM + " " + receiver.getUserName() + " " + receiver.isAuthenticated() + " " + encryptedMessage);
+            receiver.decryptReceivedMessage(encryptedMessage);
         }
     }
 
@@ -615,10 +618,7 @@ public class Server {
                     for (Group g:groups) {
                         g.removeClientFromGroup(client);
                     }
-                    System.out.println("["+client.getUserName() + " " + client.isAuthenticated()+"] was idle for more than 2 min");
-                    System.out.println("["+client.getUserName() + " " + client.isAuthenticated()+"] was removed from all the groups");
-                    client.out.println("You were idle for more than 2 minutes, removing you from all the groups.");
-                    client.out.flush();
+                    sendMessageToClient(client,"was removed from all groups for being idle");
                     timer.cancel();
                 }
             }

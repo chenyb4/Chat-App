@@ -10,6 +10,7 @@ public class DataProvider {
 
     public static List<Client> listClients = new LinkedList<>();
 
+    //static will run once the program is started
     static {
         //Passwords stored in hashes
         listClients.add(new Client("Lukman", PasswordHasher.toHash("123456"))); //123456

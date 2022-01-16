@@ -47,10 +47,10 @@ public class Group {
             }
         }
         //All messages send to this group can be viewed by this client
-        for (Message m:messages) {
+        /*for (Message m:messages) {
             client.out.println(m.getType());
             client.out.flush();
-        }
+        }*/
     }
 
     /**
@@ -79,8 +79,8 @@ public class Group {
                 c.out.flush();
             }
         }
-        //todo: can be better message
-        messages.add(new Message("BCSTG " + client.getUserName() + " " + client.isAuthenticated() + " " + name + " " + message));
+        //todo: if the client wants to view the messages before the client joined the group
+        //messages.add(new Message("BCSTG " + client.getUserName() + " " + client.isAuthenticated() + " " + name + " " + message));
     }
 
     public void addClientToGroup(Client client) {

@@ -2,11 +2,15 @@ package Server.Model;
 
 import Server.FileTransfer.FileServer;
 import Server.FileTransfer.Transfer;
-import Server.PasswordHasher;
 import Server.FileChecker;
 import java.io.*;
-import java.net.InetAddress;
+
+import Server.MessageEncryptor;
 import java.net.Socket;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 
 public class Client {
 
@@ -20,9 +24,22 @@ public class Client {
     private boolean receivedPong = false;
     private boolean active = false;
 
+    //Encryption
+    private PrivateKey privateKey;
+    private PublicKey publicKey;
+
     //Constructors
     public Client(Socket clientSocket) {
         this.clientSocket = clientSocket;
+        try {
+            KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+            generator.initialize(1024);
+            KeyPair pair = generator.generateKeyPair();
+            privateKey = pair.getPrivate();
+            publicKey = pair.getPublic();
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
     }
 
     public Client(String userName, String password) {
@@ -64,20 +81,23 @@ public class Client {
      */
 
     public void receiveFile(String placeToStore, FileServer fileServer, Transfer transfer) {
-        //This array should have the length of the file size
-        byte[] contents = new byte[(int) transfer.getFile().length()];
         try {
+            //This array should have the length of the file size
+            byte[] contents = new byte[(int) transfer.getFile().length()];
             Socket s = fileServer.getFileClientSocket();
             InputStream is = s.getInputStream();
             FileOutputStream fo = new FileOutputStream(placeToStore);
             is.read(contents,0,contents.length);
             fo.write(contents,0, contents.length);
             String checksumToBeChecked = FileChecker.getFileChecksum(placeToStore);
+            //Check the file for any corruption
             if (FileChecker.compareChecksum(transfer.getChecksum(),checksumToBeChecked)) {
+                //File is clear
                 System.out.println("\u001B[32m"+"File: [ "+ placeToStore +" ] was stored successfully"+"\u001B[0m");
                 out.println("File is stored in: " + placeToStore);
                 out.flush();
             } else {
+                //File is corrupted
                 System.out.println("\u001B[32m"+"File: [ "+ placeToStore +" ] was corrupted during transmission"+"\u001B[0m");
                 out.println("File is corrupted");
                 out.flush();
@@ -88,6 +108,13 @@ public class Client {
         } catch (Exception e) {
             System.err.println(e.getMessage());
         }
+    }
+
+    public void decryptReceivedMessage(String message) {
+        //Decrypt the message with my private key
+        String decryptedMessage = MessageEncryptor.decrypt(privateKey,message);
+        out.println(decryptedMessage);
+        out.flush();
     }
 
     /**
@@ -122,6 +149,10 @@ public class Client {
 
     public String getPassword() {
         return password;
+    }
+
+    public PublicKey getPublicKey() {
+        return publicKey;
     }
 
     public boolean isActive() {
