@@ -2,6 +2,8 @@ package Client.Model;
 
 import java.io.*;
 import java.net.Socket;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 
 public class Client {
 
@@ -12,6 +14,8 @@ public class Client {
     private boolean isAuth = false;
     private boolean isConnected = false;
     private boolean receivedPong = false;
+    private PublicKey publicKey;
+    private PrivateKey privateKey;
 
     private void checkLogin(){
         if (this.userName.equals("")) {
