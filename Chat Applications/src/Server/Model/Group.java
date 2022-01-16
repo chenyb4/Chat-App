@@ -7,13 +7,13 @@ public class Group {
 
     private String name = "";
     private List<Client> clients;
-    private List<Message> messages;
+    //private List<Message> messages;
 
     //Constructor
     public Group (String groupName) {
         this.name = groupName;
         this.clients = new LinkedList<>();
-        this.messages = new LinkedList<>();
+        //this.messages = new LinkedList<>();
     }
 
     /**

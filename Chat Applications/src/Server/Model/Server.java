@@ -617,6 +617,7 @@ public class Server {
                 if (temp == 0){
                     for (Group g:groups) {
                         g.removeClientFromGroup(client);
+                        g.sendMessageToGroupMembersWhenLeft(client);
                     }
                     sendMessageToClient(client,"was removed from all groups for being idle");
                     timer.cancel();
