@@ -41,6 +41,11 @@ public class Transfer {
         this.file = new File(path);
         byte[] contents = new byte[(int) file.length()];
         try {
+            this.checksum = FileChecker.getFileChecksum(path);
+        } catch (Exception e) {
+            System.err.println("Error generating checksum");
+        }
+        try {
             Socket s = new Socket(InetAddress.getByName("localhost"),5000);
             FileInputStream fis = new FileInputStream(file);
             OutputStream os = s.getOutputStream();
@@ -92,10 +97,5 @@ public class Transfer {
 
     public String getChecksum() {
         return checksum;
-    }
-
-    //Setters
-    public void setChecksum(String checksum) {
-        this.checksum = checksum;
     }
 }
