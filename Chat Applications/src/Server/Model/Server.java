@@ -174,8 +174,6 @@ public class Server {
         } else {
             Client receiver = serverHandler.findClientByUsername(username,clients);
             Transfer transfer = fileServer.transferHandler(path,sender,receiver);
-            String checksum = FileChecker.getFileChecksum(path);
-            transfer.setChecksum(checksum);
             sender.setActive(true);
             sendMessageToClient(sender,"OK " + CMD_AAFT + " " + username + " " + path);
             //Send to the receiver that the file is waiting your approval
@@ -347,7 +345,7 @@ public class Server {
             //Encrypt with receiver's public key
             String encryptedMessage = MessageEncryptor.encrypt(receiver.getPublicKey(),CMD_PM + " " + client.getUserName() + " " + client.isAuthenticated() + " " + msg);
             //Check this
-            sendMessageToClient(client,"OK " + CMD_PM + " " + receiver.getUserName() + " " + receiver.isAuthenticated() + " " + encryptedMessage);
+            sendMessageToClient(client,"OK " + CMD_PM + " " + receiver.getUserName() + " " + receiver.isAuthenticated() + " " + MessageEncryptor.encrypt(receiver.getPublicKey(),msg));
             receiver.decryptReceivedMessage(encryptedMessage);
         }
     }

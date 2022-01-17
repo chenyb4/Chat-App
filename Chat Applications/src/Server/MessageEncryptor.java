@@ -20,6 +20,7 @@ public class MessageEncryptor {
     public static String encrypt (PublicKey publicKey, String message) {
         try {
             byte[] messageToBytes = message.getBytes();
+            //Algorithm/mode/padding
             Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
             cipher.init(Cipher.ENCRYPT_MODE,publicKey);
             byte[] encryptedBytes = cipher.doFinal(messageToBytes);
@@ -40,6 +41,7 @@ public class MessageEncryptor {
     public static String decrypt (PrivateKey privateKey, String encryptedMessage) {
         try {
             byte[] encryptedBytes = decode(encryptedMessage);
+            //Algorithm/mode/padding
             Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
             cipher.init(Cipher.DECRYPT_MODE,privateKey);
             byte[] decryptedMessage = cipher.doFinal(encryptedBytes);
