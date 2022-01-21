@@ -141,18 +141,7 @@ public class UserInterface {
     }
 
     public static void menu () {
-       /* System.out.println("Please enter your message and hit enter to send the message to other people!");
-        System.out.println("If you want to see all the connected clients, please enter \"-C\".");
-        System.out.println("If you want to send a private message to a certain user, please enter \"-D\".");
-        System.out.println("If you want to create a group, please enter \"-G\".");
-        System.out.println("If you want to join a group, please enter \"-JG\".");
-        System.out.println("If you want to view existing groups, please enter \"-EG\".");
-        System.out.println("If you want to send message to a group, please enter \"-SG\".");
-        System.out.println("If you want to leave a group, please enter \"-LG\".");
-        System.out.println("If you want to quit, please enter \"-Q\".");
-        System.out.println("If you want to see the menu again, please enter \"-?\".");*/
-        System.out.println("Please enter your message and hit enter to send the message to other people!\n\n"  +
-                "Or enter one of the menu items below:\n" +
+        System.out.println("Please enter your message and hit enter to send the message to other people!\n\n"  + "Or enter one of the menu items below:\n" +
                         "\"-?\": to see this menu again.\n"+
                 "\"-C\": to see all the connected clients.\n" +
                 "\"-D\": to send a private message to a certain user.\n" +
@@ -163,6 +152,9 @@ public class UserInterface {
                 "\"-SG\": to send a message to everyone in a certain group.\n" +
                 "\"-LG\": to leave a group.\n" +
                 "\"-AU\": to authenticate yourself.\n" +
+                        "\"-FT\": to Send a file to a certain user.\n" +
+                //Here where the user either accept or reject the file
+                        "\"-FT\": to see your list of files that were sent to you.\n" +
                 "\"-Q\": to quit the chat app.\n\n"
                 );
     }

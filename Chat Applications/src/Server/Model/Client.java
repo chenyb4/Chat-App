@@ -112,20 +112,6 @@ public class Client {
         }
     }
 
-
-    /*public String decryptSessionKey (Client receiver) {
-        String encryptedSessionKey = sessionKeys.get(receiver);
-        return MessageEncryptor.decrypt(privateKey,encryptedSessionKey);
-    }*/
-
-   /* public String sendEncryptedMessage (Client receiver,String message) {
-        //Both parties have now session key
-        out.println("OK PME " + receiver.userName + " " + message);
-        out.flush();
-        //This is sent to receiving client
-        return "PME " + userName + " " + isAuthenticated() + " " + message;
-    }*/
-
     public String sendSessionKey (Client receiver,String senderPublicKey) {
         try {
             if (sessionKeys.get(receiver) == null || receiver.sessionKeys.get(this) == null){
@@ -141,7 +127,7 @@ public class Client {
             //Store the session key
             sessionKeys.putIfAbsent(receiver,secretKey);
             receiver.sessionKeys.putIfAbsent(this,secretKey);
-            //Encrypt the session key with sender's public key (RSA)
+            //Encrypt the session key with sender's public key
             return MessageEncryptor.encrypt(publicKeyConverted,MessageEncryptor.encode(secretKey.getEncoded()));
         } catch (Exception e){
             System.err.println(e.getMessage());
@@ -171,6 +157,12 @@ public class Client {
         }
     }
 
+    public void decryptReceivedMessage (Client sender,String msg) {
+        String decryptedMessage = MessageEncryptor.decrypt(sessionKeys.get(sender),msg);
+        out.println("PME " + sender.getUserName() + " " + sender.isAuthenticated() + " " + decryptedMessage);
+        out.flush();
+    }
+
 
     /**
      * Check if the client is authenticated
@@ -186,7 +178,7 @@ public class Client {
     }
 
     private SecretKey generateSessionKey (PrivateKey privateKey, PublicKey publicKey) {
-        //Generate session key using public and private keys
+        //Generate a session key using sender's public key and receiver's private key
         try {
             KeyAgreement ka = KeyAgreement.getInstance("DH");
             ka.init(privateKey);

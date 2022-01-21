@@ -2,6 +2,7 @@ package Server.FileTransfer;
 
 import Server.Model.Client;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -40,28 +41,13 @@ public class FileServer {
     }
 
     /**
-     * This method will start a thread for every file request
-     * @param path of the file to be sent
      * @param sender of the file
      * @param receiver of the file
      */
 
-    public Transfer transferHandler(String path, Client sender, Client receiver) {
-        Transfer transfer = new Transfer(sender,receiver);
-        Thread fileHandler = new Thread(() -> {
-            System.out.println(COLOR_GREEN +">> [" + sender.getUserName() + " " + sender.isAuthenticated() + "] uploaded: " + path+ COLOR_RESET);
-            //Upload the file to the server
-            transfer.uploadToServer(path);
-            transfers.add(transfer);
-        });
-        fileHandler.start();
-        try {
-            //Wait for the file to be uploaded
-            fileHandler.join();
-        } catch (InterruptedException ie) {
-            System.err.println(COLOR_GREEN +ie.getMessage()+ COLOR_RESET);
-            System.err.println(COLOR_GREEN +"Error in joining file handler thread"+ COLOR_RESET);
-        }
+    public Transfer addTransfer(Client sender, Client receiver, File file) {
+        Transfer transfer = new Transfer(sender,receiver,file);
+        transfers.add(transfer);
         return transfer;
     }
 

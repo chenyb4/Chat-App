@@ -13,18 +13,16 @@ public class MessageConverter {
             return "(message not sent)";
         }
 
+        if (m.contains("INFO")){
+            return "Welcome to the chat server!";
+        }
         // if it is not the case of message not sent, then we care be sure that
         //we can separate the message by space and analyze the parts
         String[] lineParts=m.split(" ");
-
         //the name is being converted in a format that it lets the users know whether the sender of
         //the message is authenticated
         //INFO Welcome to chat room
-
-            //String nameWithStar=MessageProcessor.convertNameToIncludeAuthInfo(lineParts);
-
-
-
+        //String nameWithStar=MessageProcessor.convertNameToIncludeAuthInfo(lineParts);
         switch (lineParts[0]){
             case "BCST"->{
                 //server tells me that someone sent a message to everyone
@@ -38,6 +36,9 @@ public class MessageConverter {
             case "PM"->{
                 //server tells me that someone sent me a pm
                 return MessageProcessor.processPM(lineParts);
+            }
+            case "PME" -> {
+                return MessageProcessor.processPME(lineParts);
             }
             case "CG"->{
                 //server tells me that some mofo created a group
@@ -71,7 +72,6 @@ public class MessageConverter {
                 String nameWithStar=MessageProcessor.convertNameToIncludeAuthInfo(lineParts);
                 return nameWithStar+" left group "+groupName+".";
             }
-
             case "ER01" -> {return "This user name is already used. Please choose a different username!";}
             case "ER02" -> {return "The username you enter has an invalid format. Only characters, numbers and underscores are allowed!";}
             case "ER03" -> {return "Please log in first!";}
@@ -85,17 +85,18 @@ public class MessageConverter {
             case "ER11" -> {return "You are already authenticated.";}
             case "ER12" -> {return "You cannot send an empty message.";}
             case "ER13" -> {return "You cannot send a message to yourself.";}
+            case "ER14" -> {return "The file chosen does not exist";}
+            case "ER15" -> {return "You cannot send a file to your self";}
+            case "ER16" -> {return "";} //This error might never occur
+            case "ER17" -> {return "The id you entered does not exist";}
+            case "ER18" -> {return "The password you entered is incorrect";}
+            case "ER19" -> {return "Your credential was not found in the server and cannot authenticate";}
             case "DSCN" -> {return "You have disconnected from the server due to inactivity.";}
             case "MSG" -> {return "You entered an invalid message.";}
             case "ER00" -> { return "There is no such command. Please enter '?' to see the manual.";}
             default -> {}
         }
-        if (m.contains("INFO")){
-            return "Welcome to the chat server!";
-        }
-        if(m==null){
-            return "(message not sent)";
-        }
+
         return "";
     }
 

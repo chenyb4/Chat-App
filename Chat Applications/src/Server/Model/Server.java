@@ -2,12 +2,10 @@ package Server.Model;
 
 import Server.FileTransfer.FileServer;
 import Server.FileTransfer.Transfer;
-import Server.FileChecker;
 import Server.PasswordHasher;
-import Server.MessageEncryptor;
+
 import java.net.*;
 import java.io.*;
-import java.security.PublicKey;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -20,7 +18,7 @@ public class Server {
     private Socket clientSocket;
     private List<Client> clients = new LinkedList<>();
     private List<Group> groups = new LinkedList<>();
-    private final boolean SHOULD_PING = true;
+    private final boolean SHOULD_PING = false;
     private final ServerHandler serverHandler = new ServerHandler();
 
     //File transfer
@@ -191,7 +189,7 @@ public class Server {
             sendMessageToClient(sender,"ER15 Cannot send file to yourself");
         } else {
             Client receiver = serverHandler.findClientByUsername(username,clients);
-            Transfer transfer = fileServer.transferHandler(path,sender,receiver);
+            Transfer transfer = fileServer.addTransfer(sender,receiver,new File(path));
             sender.setActive(true);
             sendMessageToClient(sender,"OK " + CMD_AAFT + " " + username + " " + path);
             //Send to the receiver that the file is waiting your approval
@@ -215,6 +213,8 @@ public class Server {
         } else {
             receiver.setActive(true);
             sendMessageToClient(receiver,"OK " + CMD_RAFTA + " " + id);
+            //Upload the file to the server
+            transfer.uploadToServer(transfer.getFile().getPath());
             //Send to the sender that the file is accepted
             transfer.sendMessageToSender(CMD_RAFTA + " " + receiver.getUserName() + " " + receiver.isAuthenticated() + " " + transfer.getFile().getName() + " " + transfer.getId());
             //The destination is always in user home
@@ -286,8 +286,8 @@ public class Server {
             //Reset ReceivedPong to false
             client.setReceivedPong(false);
             sendMessageToClient(client,"PING");
-            //Wait for 4 seconds for response
-            sleepCurrentThread(4000);
+            //Wait for 3 seconds for response
+            sleepCurrentThread(3000);
             //If the client changed the status receivedPong to true within 4 seconds,
             // then the heartbeat is success, otherwise it failed
             if (client.isReceivedPong()){
@@ -299,7 +299,7 @@ public class Server {
                 removeClient(client);
                 executorService.shutdown();
             }
-        },0,11,TimeUnit.SECONDS);
+        },0,10,TimeUnit.SECONDS);
     }
 
     /**
@@ -380,9 +380,7 @@ public class Server {
         } else {
             client.setActive(true);
             sendMessageToClient(client,"OK " + CMD_PME + " " + username + " " + msg);
-            String decryptedMessage = MessageEncryptor.decrypt(receiver.getSessionKeys().get(client),msg);
-            receiver.out.println(CMD_PME + " " + client.getUserName() + " " + decryptedMessage);
-            receiver.out.flush();
+            receiver.decryptReceivedMessage(client,msg);
         }
     }
 

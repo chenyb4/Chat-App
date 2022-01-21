@@ -30,7 +30,7 @@ public class Main {
         //Thread for reading messages from the server
         clientHandler.startThreadForReadingMessages();
         //Check the server status, if its down, than the program will shut down.
-        clientHandler.checkForServerErrors();
+        //clientHandler.checkForServerErrors();
         //Menu for the user
        // UserInterface.menu();
         //Thread for sending Messages to the server
