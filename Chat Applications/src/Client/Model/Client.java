@@ -1,9 +1,17 @@
 package Client.Model;
 
+import Server.MessageEncryptor;
+
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.util.Base64;
 
 public class Client {
 
@@ -16,6 +24,18 @@ public class Client {
     private boolean receivedPong = false;
     private PublicKey publicKey;
     private PrivateKey privateKey;
+
+    public Client() {
+        try {
+            KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+            generator.initialize(1024);
+            KeyPair pair = generator.generateKeyPair();
+            privateKey = pair.getPrivate();
+            publicKey = pair.getPublic();
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+    }
 
     private void checkLogin(){
         if (this.userName.equals("")) {
@@ -123,16 +143,65 @@ public class Client {
     public void sendPrivateMessage (String username,String msg) {
         //check if the user is logged in
         checkLogin();
-
         if (username.equals("")) {
             //check if the username input is correct
             throw new IllegalStateException("the username is not allowed to be an empty string");
         } else if (msg == null || msg.equals("")) {
             //check if the message entered is correct
             throw new IllegalArgumentException("Cannot send empty message!");
-        }
-        else {
+        } else {
             sendMessage("PM "+username+" "+msg+"\n");
+        }
+    }
+
+    public SecretKey sendSessionKeyRequest (String username){
+        checkLogin();
+        if (username.equals("")) {
+            //check if the username input is correct
+            throw new IllegalStateException("the username is not allowed to be an empty string");
+        } else {
+            //Send my public key to the receiver to get a session
+            String publicKey = MessageEncryptor.encode(this.publicKey.getEncoded());
+            sendMessage("RSS "+username+" "+publicKey+"\n");
+            String sessionKey;
+            try {
+                String[] split = in.readLine().split(" ");
+                if (split[0].equals("ER04")){
+                    //todo: I added the error checking here for testing, move it to its proper place
+                    System.err.println("User not found");
+                } else {
+                    sessionKey = split[3];
+                    //Decrypt the session key with my private key
+                    String decryptedSessionKey = MessageEncryptor.decrypt(privateKey,sessionKey);
+                    byte[] decodedKey = MessageEncryptor.decode(decryptedSessionKey);
+                    //Turn the String to its original form which is the secret key
+                    return new SecretKeySpec(decodedKey, 0, 32, "AES");
+                }
+            } catch (IOException e) {
+                System.err.println(e.getMessage());
+            }
+        }
+        return null;
+    }
+
+    public void sendEncryptedPrivateMessage (String username,String msg) {
+        checkLogin();
+        if (username.equals("")) {
+            //check if the username input is correct
+            throw new IllegalStateException("the username is not allowed to be an empty string");
+        } else if (msg == null || msg.equals("")) {
+            //check if the message entered is correct
+            throw new IllegalArgumentException("Cannot send empty message!");
+        } else {
+            SecretKey secretKey = sendSessionKeyRequest(username);
+            if (secretKey == null){
+                //Add error handling
+                System.err.println();
+            } else {
+                //Encrypt the message with the gotten session key
+                String message = MessageEncryptor.encrypt(secretKey,msg);
+                sendMessage("PME " + username + " " + message + "\n");
+            }
         }
     }
 
@@ -187,6 +256,7 @@ public class Client {
      * @param groupName the name of the group to send message to
      * @param msg the message to send to the group
      */
+
     public void sendMessageToGroup (String groupName,String msg) {
         checkLogin();
         if (groupName.equals("")) {

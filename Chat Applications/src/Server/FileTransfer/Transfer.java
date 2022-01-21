@@ -52,6 +52,9 @@ public class Transfer {
             fis.read(contents,0, contents.length);
             os.write(contents,0, contents.length);
             System.out.println(COLOR_GREEN + "File: [ "+path+" ] was uploaded to the server successfully" + COLOR_RESET);
+            s.close();
+            fis.close();
+            os.close();
         } catch (IOException io) {
             System.err.println(COLOR_GREEN +io.getMessage()+ COLOR_RESET);
             System.err.println(COLOR_GREEN +"Error in uploading files to server"+ COLOR_RESET);

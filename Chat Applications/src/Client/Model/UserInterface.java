@@ -111,6 +111,23 @@ public class UserInterface {
                     System.err.println(e.getMessage());
                 }
             }
+            case "-P" -> {
+                String username;
+                String message;
+                System.out.println("Please enter the username of the user you want to send the encrypted message to: >> ");
+                username=readString();
+                if(username.equals(ClientHandler.myOwnUsername)){
+                    System.err.println("You cannot send a message to yourself.");
+                }else{
+                    System.out.println("Please enter the encrypted message you want to send to "+username+": >>");
+                    message=readString();
+                    try {
+                        client.sendEncryptedPrivateMessage(username,message);
+                    } catch (Exception e) {
+                        System.err.println(e.getMessage());
+                    }
+                }
+            }
             case "-?" -> menu();
             default -> {
                 try {
@@ -139,6 +156,7 @@ public class UserInterface {
                         "\"-?\": to see this menu again.\n"+
                 "\"-C\": to see all the connected clients.\n" +
                 "\"-D\": to send a private message to a certain user.\n" +
+                "\"-P\": to send an encrypted private message to a certain user.\n" +
                 "\"-G\": to create a group.\n" +
                 "\"-JG\": to join a group.\n" +
                 "\"-EG\": to view existing groups.\n" +

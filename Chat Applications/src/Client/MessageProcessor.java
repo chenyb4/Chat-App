@@ -148,7 +148,7 @@ public class MessageProcessor {
 
                 return messageToReturn;
             }
-            case "PM", "BCST","BCSTG" ->{
+            case "PM", "BCST","BCSTG","PME" ->{
                 //server tells me that the pm is sent;
                 //or server tells me that the broadcast message was sent
                 return "(message sent)";
