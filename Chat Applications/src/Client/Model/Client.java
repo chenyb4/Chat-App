@@ -29,7 +29,8 @@ public class Client {
     //Encryption
     private PublicKey publicKey;
     private PrivateKey privateKey;
-    private SecretKey sessionKey;
+    //<Username as key, Session key as value>
+    private Map<String,SecretKey> sessionKeys = new HashMap<>();
 
     //Constructor
     public Client() {
@@ -211,11 +212,12 @@ public class Client {
 
     public void sendEncryptedPrivateMessage (String username,String msg) {
         checkLogin();
-        if (sessionKey == null){
+        if (!sessionKeys.containsKey(username)){
             //Allow requesting session key only once
-            this.sessionKey = sendSessionKeyRequest(username);
+            SecretKey key = sendSessionKeyRequest(username);
+            sessionKeys.putIfAbsent(username,key);
         }
-        if (sessionKey != null){
+        if (sessionKeys.get(username) != null){
             if (username.equals("")) {
                 //check if the username input is correct
                 throw new IllegalStateException("the username is not allowed to be an empty string");
@@ -224,7 +226,7 @@ public class Client {
                 throw new IllegalArgumentException("Cannot send empty message!");
             } else {
                 //Encrypt the message with the gotten session key
-                String message = MessageEncryptor.encrypt(sessionKey,msg);
+                String message = MessageEncryptor.encrypt(sessionKeys.get(username),msg);
                 sendMessage("PME " + username + " " + message + "\n");
             }
         }
