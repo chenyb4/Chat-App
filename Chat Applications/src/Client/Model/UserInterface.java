@@ -153,6 +153,7 @@ public class UserInterface {
         System.out.println("If you want to see the menu again, please enter \"-?\".");*/
         System.out.println("Please enter your message and hit enter to send the message to other people!\n\n"  +
                 "Or enter one of the menu items below:\n" +
+                        "\"-?\": to see this menu again.\n"+
                 "\"-C\": to see all the connected clients.\n" +
                 "\"-D\": to send a private message to a certain user.\n" +
                 "\"-P\": to send an encrypted private message to a certain user.\n" +
@@ -162,8 +163,8 @@ public class UserInterface {
                 "\"-SG\": to send a message to everyone in a certain group.\n" +
                 "\"-LG\": to leave a group.\n" +
                 "\"-AU\": to authenticate yourself.\n" +
-                "\"-Q\": to quit the chat app.\n" +
-                "\"-?\": to see this menu again.\n\n");
+                "\"-Q\": to quit the chat app.\n\n"
+                );
     }
 
     public String readString () {
