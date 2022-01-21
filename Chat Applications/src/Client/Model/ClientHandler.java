@@ -10,7 +10,7 @@ public class ClientHandler{
 
     private boolean pingReceived = true;
     private Client client;
-    public static String myOwnUsername="";
+    public static String myOwnUsername = "";
 
     public ClientHandler(Client client) {
         this.client = client;
@@ -53,13 +53,13 @@ public class ClientHandler{
         Thread messageHandler = new Thread(() -> {
             while (client.isConnected()){
                 //This will read and print the messages from the server.
-                isMessageReceived();
+                receiveResponseFromServer();
             }
         });
         messageHandler.start();
     }
 
-    private void isMessageReceived() {
+    private void receiveResponseFromServer () {
         try {
             String temp = "";
             boolean messageReceivedFromTheServer = client.getIn().ready();
@@ -109,6 +109,10 @@ public class ClientHandler{
         },0,20000);
     }
 
+    /**
+     * Start a thread for sending messages to the server
+     */
+
     public void startThreadForSendingMessages () {
         UserInterface userInterface = new UserInterface(client);
         //Thread for sending messages to the server
@@ -119,6 +123,11 @@ public class ClientHandler{
         });
         SendingMessageHandler.start();
     }
+
+    /**
+     * Read the user input as a String
+     * @return user input
+     */
 
     private String readString() {
         Scanner sc = new Scanner(System.in);

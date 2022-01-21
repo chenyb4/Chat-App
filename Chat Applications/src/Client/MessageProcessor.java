@@ -3,9 +3,7 @@ package Client;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-
-
-//the static methods in this class are being called by message converter to conver messages
+//the static methods in this class are being called by message converter to convert messages
 public class MessageProcessor {
 
     public static String convertNameToIncludeAuthInfo(String[] lineParts){
@@ -19,7 +17,6 @@ public class MessageProcessor {
     }
 
     /**
-     *
      * @param lineParts
      * @return
      */
@@ -36,7 +33,7 @@ public class MessageProcessor {
     }
 
     public static String processBCSTG(String[] lineParts){
-        //reveived braodcast message for a group
+        //received broadcast message for a group
         //e.g. BCSTG <username> <1> <group name> <message>
         String nameWithStar=convertNameToIncludeAuthInfo(lineParts);
         String groupName=lineParts[3];
@@ -48,7 +45,6 @@ public class MessageProcessor {
     }
 
     /**
-     *
      * @param lineParts
      * @return
      */
@@ -56,7 +52,6 @@ public class MessageProcessor {
     public static String processPM(String[] lineParts){
         //e.g. PM <username of the sender> <1> <message>
         String nameWithStar=convertNameToIncludeAuthInfo(lineParts);
-
         String fullMessage="";
         for (int i = 3; i <lineParts.length ; i++) {
             fullMessage+=lineParts[i]+" ";
@@ -65,6 +60,15 @@ public class MessageProcessor {
         return nameWithStar+" says to you secretly: "+fullMessage;
     }
 
+    public static String processPME(String[] lineParts){
+        //e.g. PME <username of the sender> <1> <encrypted message>
+        String nameWithStar=convertNameToIncludeAuthInfo(lineParts);
+        String fullMessage="";
+        for (int i = 3; i <lineParts.length ; i++) {
+            fullMessage+=lineParts[i]+" ";
+        }
+        return nameWithStar+" has sent an encrypted message which says: "+fullMessage;
+    }
 
     /**
      * if the received message contains "OK", then that is a server response message
@@ -76,48 +80,35 @@ public class MessageProcessor {
         switch (lineParts[1]){
             case "VCC"->{
                 //view connected clients
-
                 // the line parts of the names are not in the correct format
                 //becase they were seperated by space
                 //here we need to combine everything from index 2 in line part
                 // and then seperate them by comma, then by space to see who is authed
-
-
                 //OK VCC Lukman 0,Yibing 0,
-
                 //OK
                 //VCC
                 //Lukman
                 //0,Yibing
                 //0,
-
                 //namesString is a string that contain all the names
                 String namesString="";
                 for (int i = 2; i <lineParts.length ; i++) {
                     namesString+=lineParts[i]+" ";
                 }
-                //
-               // System.out.println("nameString:"+namesString);
-
+                // System.out.println("nameString:"+namesString);
                 //nameString
                 //Lukman 0,Yibing 0,
-
                 String[] namesWithAuthInfo=namesString.split(",");
-
                 //Lukman 0 index 0
                 //Yibing 0 index 1
                 //          index 2
-
                 //false for the boolean means unauthenticated
                 HashMap<String, Boolean> authInfo=new HashMap<>();
-
                 for (int i = 0; i < namesWithAuthInfo.length-1; i++) {
-
                     //i=0
                     String[] oneNameWithAuthInfo=namesWithAuthInfo[i].split(" ");
                     //Lukman index 0
                     // 0    index 1
-
                     if(Integer.parseInt(oneNameWithAuthInfo[1])==0){
                         //not authenticated
                         authInfo.put(oneNameWithAuthInfo[0],false);
@@ -125,7 +116,6 @@ public class MessageProcessor {
                         authInfo.put(oneNameWithAuthInfo[0],true);
                     }
                 }
-
                 // now produce the name witht the * shape
                 ArrayList<String> namesWithStars=new ArrayList<>();
                 for (String i : authInfo.keySet()) {
@@ -135,7 +125,6 @@ public class MessageProcessor {
                         namesWithStars.add(i);
                     }
                 }
-
                 //now make the message for returning
                 String messageToReturn="The list of connected users are: \n";
                 for (int i = 0; i < namesWithStars.size(); i++) {
@@ -145,7 +134,6 @@ public class MessageProcessor {
                         messageToReturn+=namesWithStars.get(i)+",";
                     }
                 }
-
                 return messageToReturn;
             }
             case "PM", "BCST","BCSTG","PME" ->{
@@ -153,17 +141,12 @@ public class MessageProcessor {
                 //or server tells me that the broadcast message was sent
                 return "(message sent)";
             }
-            case  "CG" -> {
-                return "The group is created.";
-            }
-            case "JG"->{
-                return "You have joined the group.";
-            }
+            case  "CG" -> {return "The group is created.";}
+            case "JG"->{return "You have joined the group.";}
             case "VEG"->{
-                if(lineParts[2]==""){
+                if(lineParts[2].equals("")){
                     return "There is no group for now.";
                 }else{
-
                     String temp="The groups are: ";
                     String[] groupNames=convertNameString(lineParts[2]);
                     for (int i = 0; i < groupNames.length; i++) {
@@ -174,28 +157,16 @@ public class MessageProcessor {
                             //since the 2nd group name, there should be a comma in front for user friendliness puposes
                             temp+=","+groupNames[i];
                         }
-
                     }
                     return temp;
                 }
             }
-            case "AUTH"->{
-                return "You are now authenticated.";
-            }
-
+            case "AUTH"->{return "You are now authenticated.";}
             //this space is for file transfer messages
 
-
-            case "LG"->{
-                return "You have left the group.";
-            }
-
-            case "Goodbye"-> {
-                //termination
-                return "You have exited the chat room.";
-            }
-
-
+            case "LG"->{return "You have left the group.";}
+            //termination
+            case "Goodbye" -> {return "You have exited the chat room.";}
             default -> {
                 //logged in
                 String name=lineParts[1];
@@ -214,7 +185,4 @@ public class MessageProcessor {
         String[] lineParts=nameString.split(",");
         return lineParts;
     }
-
-
-
 }
