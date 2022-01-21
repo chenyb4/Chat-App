@@ -7,6 +7,7 @@ import Server.PasswordHasher;
 import Server.MessageEncryptor;
 import java.net.*;
 import java.io.*;
+import java.security.PublicKey;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -41,6 +42,8 @@ public class Server {
     private final String CMD_AAFT = "AAFT"; //Ask for file transfer
     private final String CMD_RAFTA = "RAFTA"; //Accept file transfer
     private final String CMD_RAFTR = "RAFTR"; //Reject file transfer
+    private final String CMD_PME = "PME"; //Send encrypted private message
+    private final String CMD_RSS = "RSS"; //Send public key and receive session key
 
     /**
      * @param port number
@@ -149,6 +152,21 @@ public class Server {
                     }
                     case CMD_RAFTA -> acceptFileTransfer(client,command.getPayload());
                     case CMD_RAFTR -> rejectFileTransfer(client,command.getPayload());
+                    case CMD_PME -> {
+                        //Check if the input at least contain username and message
+                        if (lineParts.length < 2){
+                            sendMessageToClient(client,"ER00 Unknown command");
+                        } else {
+                            sendEncryptedPrivateMessage(client,lineParts[0],lineParts[1]);
+                        }
+                    }
+                    case CMD_RSS -> {
+                        //Check if the payload does contain at least username and public key
+                        if (lineParts.length < 2) {
+                            sendMessageToClient(client,"ER00 Unknown command");
+                        } else {
+                            sendSessionKey(client,lineParts[0],lineParts[1]);}
+                        }
                     //Other commands than these are an error
                     default -> sendMessageToClient(client,"ER00 Unknown command");
                 }
@@ -194,8 +212,6 @@ public class Server {
         } else if (!transfer.getReceiver().equals(receiver)) {
             //File is not for this client
             sendMessageToClient(receiver,"ER16 No file to be received");
-        } else if (transfer.getSender().equals(receiver)){
-            sendMessageToClient(receiver,"ER15 Cannot send file to yourself");
         } else {
             receiver.setActive(true);
             sendMessageToClient(receiver,"OK " + CMD_RAFTA + " " + id);
@@ -221,8 +237,6 @@ public class Server {
         } else if (!transfer.getReceiver().equals(receiver)) {
             //File is not for this client
             sendMessageToClient(receiver,"ER16 No file to be received");
-        } else if (transfer.getSender().equals(receiver)) {
-            sendMessageToClient(receiver,"ER15 Cannot send file to yourself");
         } else {
             receiver.setActive(true);
             sendMessageToClient(receiver, "OK " + CMD_RAFTR + " " + id);
@@ -342,13 +356,48 @@ public class Server {
             sendMessageToClient(client,"ER12 Cannot send empty message");
         } else {
             client.setActive(true);
-            //Encrypt with receiver's public key
-            String encryptedMessage = MessageEncryptor.encrypt(receiver.getPublicKey(),CMD_PM + " " + client.getUserName() + " " + client.isAuthenticated() + " " + msg);
-            //Check this
-            sendMessageToClient(client,"OK " + CMD_PM + " " + receiver.getUserName() + " " + receiver.isAuthenticated() + " " + MessageEncryptor.encrypt(receiver.getPublicKey(),msg));
-            receiver.decryptReceivedMessage(encryptedMessage);
+            sendMessageToClient(client,"OK " + CMD_PM + " " + receiver.getUserName() + " " + msg);
+            receiver.out.println(CMD_PM + " " + client.getUserName() + " " + client.isAuthenticated() + " " + msg);
+            receiver.out.flush();
         }
     }
+
+    /**
+     * Send a direct encrypted message to a certain user
+     * @param client who wants to send the message
+     * @param username for the receiving user
+     * @param msg to be sent
+     */
+
+    public void sendEncryptedPrivateMessage (Client client,String username,String msg) {
+        Client receiver = serverHandler.findClientByUsername(username,clients);
+        if (receiver == null){
+            sendMessageToClient(client, "ER04 User does not exist");
+        } else if (client.getUserName().equals(receiver.getUserName())){
+            sendMessageToClient(client,"ER13 Cannot send message to yourself");
+        } else if (msg.equals("") || msg == null){
+            sendMessageToClient(client,"ER12 Cannot send empty message");
+        } else {
+            client.setActive(true);
+            sendMessageToClient(client,"OK " + CMD_PME + " " + username + " " + msg);
+            String decryptedMessage = MessageEncryptor.decrypt(receiver.getSessionKeys().get(client),msg);
+            receiver.out.println(CMD_PME + " " + client.getUserName() + " " + decryptedMessage);
+            receiver.out.flush();
+        }
+    }
+
+    public void sendSessionKey (Client client, String username, String publicKey) {
+        Client receiver = serverHandler.findClientByUsername(username,clients);
+        if (receiver == null){
+            sendMessageToClient(client, "ER04 User does not exist");
+        } else if (client.getUserName().equals(receiver.getUserName())){
+            sendMessageToClient(client,"ER13 Cannot send message to yourself");
+        } else {
+            String encryptedSessionKey = receiver.sendSessionKey(client,publicKey);
+            sendMessageToClient(client,"OK " + CMD_RSS + " " + username + " " + encryptedSessionKey);
+        }
+    }
+
 
     /**
      * All if statements in this method are tested and its fully function
@@ -509,13 +558,17 @@ public class Server {
      */
 
     public void sendBroadcastMessage (Client client, String message) {
-        for (Client c : serverHandler.connectedClientsList(clients)) {
-            if (!c.getUserName().equals(client.getUserName())){
-                sendMessageToClient(c,CMD_BCST + " " + client.getUserName() + " " + client.isAuthenticated() + " " + message);
+        if (message.equals("") || message == null){
+            sendMessageToClient(client,"ER12 Cannot send empty message");
+        } else {
+            for (Client c : serverHandler.connectedClientsList(clients)) {
+                if (!c.getUserName().equals(client.getUserName())){
+                    sendMessageToClient(c,CMD_BCST + " " + client.getUserName() + " " + client.isAuthenticated() + " " + message);
+                }
             }
+            client.setActive(true);
+            sendMessageToClient(client,"OK " + CMD_BCST + " " + message);
         }
-        client.setActive(true);
-        sendMessageToClient(client,"OK " + CMD_BCST + " " + message);
     }
 
     /**

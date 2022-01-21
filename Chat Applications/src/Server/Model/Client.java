@@ -6,11 +6,17 @@ import Server.FileChecker;
 import java.io.*;
 
 import Server.MessageEncryptor;
+
+import javax.crypto.KeyAgreement;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.DHParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.net.Socket;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.PrivateKey;
-import java.security.PublicKey;
+import java.security.*;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Client {
 
@@ -27,19 +33,12 @@ public class Client {
     //Encryption
     private PrivateKey privateKey;
     private PublicKey publicKey;
+    //Client with their session key;
+    private final Map<Client, SecretKey> sessionKeys = new HashMap<>();
 
     //Constructors
     public Client(Socket clientSocket) {
         this.clientSocket = clientSocket;
-        try {
-            KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
-            generator.initialize(1024);
-            KeyPair pair = generator.generateKeyPair();
-            privateKey = pair.getPrivate();
-            publicKey = pair.getPublic();
-        } catch (Exception e) {
-            System.err.println(e.getMessage());
-        }
     }
 
     public Client(String userName, String password) {
@@ -92,7 +91,7 @@ public class Client {
             String checksumToBeChecked = FileChecker.getFileChecksum(placeToStore);
             //Check the file for any corruption
             if (FileChecker.compareChecksum(transfer.getChecksum(),checksumToBeChecked)) {
-                //File is clear
+                //File is checked
                 System.out.println("\u001B[32m"+"File: [ "+ placeToStore +" ] was stored successfully"+"\u001B[0m");
                 out.println("File is stored in: " + placeToStore);
                 out.flush();
@@ -102,6 +101,9 @@ public class Client {
                 out.println("File is corrupted");
                 out.flush();
             }
+            s.close();
+            is.close();
+            fo.close();
         } catch (IOException io) {
             System.err.println(io.getMessage());
             System.err.println("Error in receiving file");
@@ -110,12 +112,65 @@ public class Client {
         }
     }
 
-    public void decryptReceivedMessage(String message) {
-        //Decrypt the message with my private key
-        String decryptedMessage = MessageEncryptor.decrypt(privateKey,message);
-        out.println(decryptedMessage);
+
+    /*public String decryptSessionKey (Client receiver) {
+        String encryptedSessionKey = sessionKeys.get(receiver);
+        return MessageEncryptor.decrypt(privateKey,encryptedSessionKey);
+    }*/
+
+   /* public String sendEncryptedMessage (Client receiver,String message) {
+        //Both parties have now session key
+        out.println("OK PME " + receiver.userName + " " + message);
         out.flush();
+        //This is sent to receiving client
+        return "PME " + userName + " " + isAuthenticated() + " " + message;
+    }*/
+
+    public String sendSessionKey (Client receiver,String senderPublicKey) {
+        try {
+            if (sessionKeys.get(receiver) == null || receiver.sessionKeys.get(this) == null){
+                initializeKeys(receiver);
+            }
+            //Get session key with receiver's private key and sender's public key
+            byte[] publicBytes = Base64.getDecoder().decode(senderPublicKey);
+            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicBytes);
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+            PublicKey publicKeyConverted = keyFactory.generatePublic(keySpec);
+            SecretKey secretKey = generateSessionKey(receiver.privateKey, this.publicKey);
+            System.out.println(MessageEncryptor.encode(secretKey.getEncoded()));
+            //Store the session key
+            sessionKeys.putIfAbsent(receiver,secretKey);
+            receiver.sessionKeys.putIfAbsent(this,secretKey);
+            //Encrypt the session key with sender's public key (RSA)
+            return MessageEncryptor.encrypt(publicKeyConverted,MessageEncryptor.encode(secretKey.getEncoded()));
+        } catch (Exception e){
+            System.err.println(e.getMessage());
+            System.err.println("Error in sending session key");
+        }
+        return null;
     }
+
+    public void initializeKeys (Client receiver) {
+        try {
+            KeyPairGenerator generator = KeyPairGenerator.getInstance("DH");
+            AlgorithmParameterGenerator generatorParam = AlgorithmParameterGenerator.getInstance("DH");
+            generatorParam.init(1024);
+            // Generate the parameters
+            AlgorithmParameters algoParams = generatorParam.generateParameters();
+            DHParameterSpec dhSpec = algoParams.getParameterSpec(DHParameterSpec.class);
+            generator.initialize(dhSpec);
+            KeyPair pair = generator.generateKeyPair();
+            KeyPair pair1 = generator.generateKeyPair();
+            privateKey = pair.getPrivate();
+            publicKey = pair.getPublic();
+            receiver.publicKey = pair1.getPublic();
+            receiver.privateKey = pair1.getPrivate();
+        } catch (Exception e){
+            System.err.println(e.getMessage());
+            System.err.println("Error in initializing the keys");
+        }
+    }
+
 
     /**
      * Check if the client is authenticated
@@ -128,6 +183,21 @@ public class Client {
         } else {
             return "0";
         }
+    }
+
+    private SecretKey generateSessionKey (PrivateKey privateKey, PublicKey publicKey) {
+        //Generate session key using public and private keys
+        try {
+            KeyAgreement ka = KeyAgreement.getInstance("DH");
+            ka.init(privateKey);
+            ka.doPhase(publicKey, true);
+            byte[] encodedKey = ka.generateSecret();
+            return new SecretKeySpec(encodedKey, 0, 32, "AES");
+        } catch (Exception e){
+            System.err.println(e.getMessage());
+            System.err.println("Error in generating session key");
+        }
+        return null;
     }
 
     //Getters
@@ -151,12 +221,12 @@ public class Client {
         return password;
     }
 
-    public PublicKey getPublicKey() {
-        return publicKey;
-    }
-
     public boolean isActive() {
         return active;
+    }
+
+    public Map<Client, SecretKey> getSessionKeys() {
+        return sessionKeys;
     }
 
     //Setters
