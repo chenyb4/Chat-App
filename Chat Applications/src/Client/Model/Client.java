@@ -215,13 +215,14 @@ public class Client {
         if (!sessionKeys.containsKey(username)){
             //Allow requesting session key only once
             SecretKey key = sendSessionKeyRequest(username);
-            sessionKeys.putIfAbsent(username,key);
+            //Add the session key to hashmap
+            if(key != null){
+                sessionKeys.putIfAbsent(username,key);
+            }
         }
         if (sessionKeys.get(username) != null){
-            if (username.equals("")) {
-                //check if the username input is correct
-                throw new IllegalStateException("the username is not allowed to be an empty string");
-            } else if (msg == null || msg.equals("")) {
+            //Username is already checked
+            if (msg == null || msg.equals("")) {
                 //check if the message entered is correct
                 throw new IllegalArgumentException("Cannot send empty message!");
             } else {
