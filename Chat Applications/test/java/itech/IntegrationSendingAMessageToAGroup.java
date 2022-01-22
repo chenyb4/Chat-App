@@ -9,7 +9,7 @@ import java.util.Properties;
 import static java.time.Duration.ofMillis;
 import static org.junit.jupiter.api.Assertions.*;
 
-class IntegrationAcceptedUsernames {
+class IntegrationSendingAMessageToAGroup {
 
     private static Properties props = new Properties();
 
@@ -21,7 +21,7 @@ class IntegrationAcceptedUsernames {
 
     @BeforeAll
     static void setupAll() throws IOException {
-        InputStream in = IntegrationAcceptedUsernames.class.getResourceAsStream("testconfig.properties");
+        InputStream in = IntegrationSendingAMessageToAGroup.class.getResourceAsStream("testconfig.properties");
         props.load(in);
         in.close();
     }
@@ -39,63 +39,55 @@ class IntegrationAcceptedUsernames {
     }
 
     @Test
-    @DisplayName("TC1.1 - threeCharactersIsAllowed")
-    void threeCharactersIsAllowed() {
+    @DisplayName("TC1.9 - loginUser")
+    void loginUser() {
         receiveLineWithTimeout(in); //info message
-        out.println("CONN mym");
+        out.println("CONN Lukman");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
-        assertEquals("OK mym", serverResponse);
+        assertEquals("OK Lukman", serverResponse);
     }
 
     @Test
-    @DisplayName("TC2.8 - userAlreadyLoggedIn")
-    void userAlreadyLoggedIn() {
-        receiveLineWithTimeout(in); //info message
-        out.println("CONN mym");
+    @DisplayName("TC1.6 - creatingAGroup")
+    void creatingAGroup() {
+        receiveLineWithTimeout(in);//info message
+        out.println("CONN jjj");
+        out.flush(); //Login first
+        receiveLineWithTimeout(in); //OK jjj
+        out.println("CG saxion");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
-        assertTrue(serverResponse.startsWith("ER01"), "User is already logged in: "+serverResponse);
+        assertEquals("OK CG saxion", serverResponse);
     }
 
     @Test
-    @DisplayName("TC2.1 - invalidUsernameFormat")
-    void invalidUserNameFormat() {
+    @DisplayName("TC1.1.1 - sendMessageToGroupWithoutJoining")
+    void sendMessageToGroupWithoutJoining() {
         receiveLineWithTimeout(in); //info message
-        out.println("CONN my");
+        out.println("CONN rgf");
+        out.flush();
+        receiveLineWithTimeout(in);//OK rgf
+        out.println("BCSTG saxion hello");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
-        assertTrue(serverResponse.startsWith("ER02"), "Too short username accepted: "+serverResponse);
+        assertTrue(serverResponse.startsWith("ER08"), "Join the group first: "+serverResponse);
     }
 
     @Test
-    @DisplayName("TC1.2 - fourteenCharactersIsAllowed")
-    void fourteenCharactersIsAllowed() {
+    @DisplayName("TC1.1.1 - sendMessageToGroup")
+    void sendMessageToYourSelf() {
         receiveLineWithTimeout(in); //info message
-        out.println("CONN abcdefghijklmn");
+        out.println("CONN juj");
+        out.flush();
+        receiveLineWithTimeout(in); //OK juj
+        out.println("JG saxion");
+        out.flush();
+        receiveLineWithTimeout(in); //OK JG saxion
+        out.println("BCSTG saxion hello");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
-        assertEquals("OK abcdefghijklmn", serverResponse);
-    }
-
-    @Test
-    @DisplayName("TC2.2 - slashRIsNotAllowed")
-    void slashRIsNotAllowed() {
-        receiveLineWithTimeout(in); //info message
-        out.println("CONN a\rlmn");
-        out.flush();
-        String serverResponse = receiveLineWithTimeout(in);
-        assertTrue(serverResponse.startsWith("ER02"), "Wrong character accepted");
-    }
-
-    @Test
-    @DisplayName("TC2.3 - bracketIsNotAllowed")
-    void bracketIsNotAllowed() {
-        receiveLineWithTimeout(in); //info message
-        out.println("CONN a)lmn");
-        out.flush();
-        String serverResponse = receiveLineWithTimeout(in);
-        assertTrue(serverResponse.startsWith("ER02"), "Wrong character accepted");
+        assertEquals("OK BCSTG saxion hello", serverResponse);
     }
 
     private String receiveLineWithTimeout(BufferedReader reader){

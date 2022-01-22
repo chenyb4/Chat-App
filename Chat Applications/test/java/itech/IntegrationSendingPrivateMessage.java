@@ -9,7 +9,7 @@ import java.util.Properties;
 import static java.time.Duration.ofMillis;
 import static org.junit.jupiter.api.Assertions.*;
 
-class IntegrationAcceptedUsernames {
+class IntegrationSendingPrivateMessage {
 
     private static Properties props = new Properties();
 
@@ -21,7 +21,7 @@ class IntegrationAcceptedUsernames {
 
     @BeforeAll
     static void setupAll() throws IOException {
-        InputStream in = IntegrationAcceptedUsernames.class.getResourceAsStream("testconfig.properties");
+        InputStream in = IntegrationSendingPrivateMessage.class.getResourceAsStream("testconfig.properties");
         props.load(in);
         in.close();
     }
@@ -39,63 +39,49 @@ class IntegrationAcceptedUsernames {
     }
 
     @Test
-    @DisplayName("TC1.1 - threeCharactersIsAllowed")
-    void threeCharactersIsAllowed() {
+    @DisplayName("TC2.1.1 - notLoggedIn")
+    void authenticateMySelf() {
         receiveLineWithTimeout(in); //info message
-        out.println("CONN mym");
+        out.println("fsdaf");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
-        assertEquals("OK mym", serverResponse);
+        assertTrue(serverResponse.startsWith("ER03"), "User is not logged in: "+serverResponse);
     }
 
     @Test
-    @DisplayName("TC2.8 - userAlreadyLoggedIn")
-    void userAlreadyLoggedIn() {
+    @DisplayName("TC1.9 - loginUser")
+    void loginUser() {
         receiveLineWithTimeout(in); //info message
-        out.println("CONN mym");
+        out.println("CONN Lukman");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
-        assertTrue(serverResponse.startsWith("ER01"), "User is already logged in: "+serverResponse);
+        assertEquals("OK Lukman", serverResponse);
     }
 
     @Test
-    @DisplayName("TC2.1 - invalidUsernameFormat")
-    void invalidUserNameFormat() {
+    @DisplayName("TC2.1.2 - sendEmptyMessage")
+    void sendEmptyMessage() {
         receiveLineWithTimeout(in); //info message
-        out.println("CONN my");
+        out.println("CONN Yibing");
+        out.flush();
+        receiveLineWithTimeout(in); //OK Yibing
+        out.println("PM Lukman    ");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
-        assertTrue(serverResponse.startsWith("ER02"), "Too short username accepted: "+serverResponse);
+        assertTrue(serverResponse.startsWith("ER00"), "User send an empty message: "+serverResponse);
     }
 
     @Test
-    @DisplayName("TC1.2 - fourteenCharactersIsAllowed")
-    void fourteenCharactersIsAllowed() {
+    @DisplayName("TC2.1.3 - sendMessageToYourSelf")
+    void sendMessageToYourSelf() {
         receiveLineWithTimeout(in); //info message
-        out.println("CONN abcdefghijklmn");
+        out.println("CONN John");
+        out.flush();
+        receiveLineWithTimeout(in); //OK John
+        out.println("PM John Hi");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
-        assertEquals("OK abcdefghijklmn", serverResponse);
-    }
-
-    @Test
-    @DisplayName("TC2.2 - slashRIsNotAllowed")
-    void slashRIsNotAllowed() {
-        receiveLineWithTimeout(in); //info message
-        out.println("CONN a\rlmn");
-        out.flush();
-        String serverResponse = receiveLineWithTimeout(in);
-        assertTrue(serverResponse.startsWith("ER02"), "Wrong character accepted");
-    }
-
-    @Test
-    @DisplayName("TC2.3 - bracketIsNotAllowed")
-    void bracketIsNotAllowed() {
-        receiveLineWithTimeout(in); //info message
-        out.println("CONN a)lmn");
-        out.flush();
-        String serverResponse = receiveLineWithTimeout(in);
-        assertTrue(serverResponse.startsWith("ER02"), "Wrong character accepted");
+        assertTrue(serverResponse.startsWith("ER13"), "Invalid password: "+serverResponse);
     }
 
     private String receiveLineWithTimeout(BufferedReader reader){
