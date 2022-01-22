@@ -9,7 +9,7 @@ import java.util.Properties;
 import static java.time.Duration.ofMillis;
 import static org.junit.jupiter.api.Assertions.*;
 
-class IntegrationAcceptedUsernames {
+class IntegrationSendingFileRequest {
 
     private static Properties props = new Properties();
 
@@ -21,7 +21,7 @@ class IntegrationAcceptedUsernames {
 
     @BeforeAll
     static void setupAll() throws IOException {
-        InputStream in = IntegrationAcceptedUsernames.class.getResourceAsStream("testconfig.properties");
+        InputStream in = IntegrationSendingFileRequest.class.getResourceAsStream("testconfig.properties");
         props.load(in);
         in.close();
     }
@@ -39,63 +39,52 @@ class IntegrationAcceptedUsernames {
     }
 
     @Test
-    @DisplayName("TC1.1 - threeCharactersIsAllowed")
-    void threeCharactersIsAllowed() {
+    @DisplayName("TC1.9 - loginUser")
+    void loginUser() {
         receiveLineWithTimeout(in); //info message
-        out.println("CONN mym");
+        out.println("CONN Lukman");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
-        assertEquals("OK mym", serverResponse);
+        assertEquals("OK Lukman", serverResponse);
     }
 
     @Test
-    @DisplayName("TC2.8 - userAlreadyLoggedIn")
-    void userAlreadyLoggedIn() {
+    @DisplayName("TC2.1.4 - userDoesNotExist")
+    void userDoesNotExist() {
         receiveLineWithTimeout(in); //info message
-        out.println("CONN mym");
+        out.println("CONN Yibing");
+        out.flush();
+        receiveLineWithTimeout(in); //OK Yibing
+        out.println("AAFT jsfsd test/resources/itech/test.txt");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
-        assertTrue(serverResponse.startsWith("ER01"), "User is already logged in: "+serverResponse);
+        assertTrue(serverResponse.startsWith("ER04"), "User does not exist: "+serverResponse);
     }
 
     @Test
-    @DisplayName("TC2.1 - invalidUsernameFormat")
-    void invalidUserNameFormat() {
+    @DisplayName("TC2.1.5 - fileDoesNotExist")
+    void fileDoesNotExist() {
         receiveLineWithTimeout(in); //info message
-        out.println("CONN my");
+        out.println("CONN ggg");
+        out.flush();
+        receiveLineWithTimeout(in); //OK ggg
+        out.println("AAFT Yibing skjddjdsfsd");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
-        assertTrue(serverResponse.startsWith("ER02"), "Too short username accepted: "+serverResponse);
+        assertTrue(serverResponse.startsWith("ER14"), "File does not exist: "+serverResponse);
     }
 
     @Test
-    @DisplayName("TC1.2 - fourteenCharactersIsAllowed")
-    void fourteenCharactersIsAllowed() {
+    @DisplayName("TC2.1.6 - sendFileToMyself")
+    void sendFileToMyself() {
         receiveLineWithTimeout(in); //info message
-        out.println("CONN abcdefghijklmn");
+        out.println("CONN gggg");
+        out.flush();
+        receiveLineWithTimeout(in); //OK gggg
+        out.println("AAFT gggg test/resources/itech/test.txt");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
-        assertEquals("OK abcdefghijklmn", serverResponse);
-    }
-
-    @Test
-    @DisplayName("TC2.2 - slashRIsNotAllowed")
-    void slashRIsNotAllowed() {
-        receiveLineWithTimeout(in); //info message
-        out.println("CONN a\rlmn");
-        out.flush();
-        String serverResponse = receiveLineWithTimeout(in);
-        assertTrue(serverResponse.startsWith("ER02"), "Wrong character accepted");
-    }
-
-    @Test
-    @DisplayName("TC2.3 - bracketIsNotAllowed")
-    void bracketIsNotAllowed() {
-        receiveLineWithTimeout(in); //info message
-        out.println("CONN a)lmn");
-        out.flush();
-        String serverResponse = receiveLineWithTimeout(in);
-        assertTrue(serverResponse.startsWith("ER02"), "Wrong character accepted");
+        assertTrue(serverResponse.startsWith("ER15"), "File does not exist: "+serverResponse);
     }
 
     private String receiveLineWithTimeout(BufferedReader reader){

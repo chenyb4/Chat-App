@@ -9,7 +9,7 @@ import java.util.Properties;
 import static java.time.Duration.ofMillis;
 import static org.junit.jupiter.api.Assertions.*;
 
-class IntegrationLineEndings {
+class IntegrationAcceptedGroupName {
 
     private static Properties props = new Properties();
 
@@ -21,7 +21,7 @@ class IntegrationLineEndings {
 
     @BeforeAll
     static void setupAll() throws IOException {
-        InputStream in = IntegrationLineEndings.class.getResourceAsStream("testconfig.properties");
+        InputStream in = IntegrationAcceptedGroupName.class.getResourceAsStream("testconfig.properties");
         props.load(in);
         in.close();
     }
@@ -39,27 +39,42 @@ class IntegrationLineEndings {
     }
 
     @Test
-    @DisplayName("TC1.3 - windowsLineEndingIsAllowed")
-    void windowsLineEndingIsAllowed() {
-        receiveLineWithTimeout(in); //info message
-        out.print("CONN myname\r\nBCST a\r\n");
+    @DisplayName("TC1.5 - threeCharactersAllowedInGroupName")
+    void threeCharactersAllowedInGroupName() {
+        receiveLineWithTimeout(in);//info message
+        out.println("CONN john");
+        out.flush(); //Login first
+        receiveLineWithTimeout(in); //OK john
+        out.println("CG saxion");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
-        assertEquals("OK myname", serverResponse);
-        serverResponse = receiveLineWithTimeout(in);
-        assertEquals("OK BCST a", serverResponse);
+        assertEquals("OK CG saxion", serverResponse);
     }
 
     @Test
-    @DisplayName("TC1.4 - linuxLineEndingIsAllowed")
-    void linuxLineEndingIsAllowed() {
+    @DisplayName("TC2.4 - groupNameAlreadyExist")
+    void groupNameAlreadyExist() {
         receiveLineWithTimeout(in); //info message
-        out.print("CONN mynamee\nBCST a\n");
+        out.println("CONN jjj");
+        out.flush(); //Login first
+        receiveLineWithTimeout(in); //OK jjj
+        out.println("CG saxion");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
-        assertEquals("OK mynamee", serverResponse);
-        serverResponse = receiveLineWithTimeout(in);
-        assertEquals("OK BCST a", serverResponse);
+        assertTrue(serverResponse.startsWith("ER05"), "Group name already exist: "+serverResponse);
+    }
+
+    @Test
+    @DisplayName("TC2.5 - groupNameInvalidFormat")
+    void groupNameInvalidFormat() {
+        receiveLineWithTimeout(in); //info message
+        out.println("CONN fdgd");
+        out.flush(); //Login first
+        receiveLineWithTimeout(in); //OK fdgd
+        out.println("CG saxion,,");
+        out.flush();
+        String serverResponse = receiveLineWithTimeout(in);
+        assertTrue(serverResponse.startsWith("ER06"), "Group name has an invalid format: "+serverResponse);
     }
 
     private String receiveLineWithTimeout(BufferedReader reader){
