@@ -87,12 +87,12 @@ public class MessageConverter {
             case "ER13" -> {return "You cannot send a message to yourself.";}
             case "ER14" -> {return "The file chosen does not exist";}
             case "ER15" -> {return "You cannot send a file to your self";}
-            case "ER16" -> {return "";} //This error might never occur
+            case "ER16" -> {return "There is no file for you";}
             case "ER17" -> {return "The id you entered does not exist";}
             case "ER18" -> {return "The password you entered is incorrect";}
             case "ER19" -> {return "Your credential was not found in the server and cannot authenticate";}
             case "DSCN" -> {return "You have disconnected from the server due to inactivity.";}
-            case "MSG" -> {return "You entered an invalid message.";}
+            //case "MSG" -> {return "You entered an invalid message.";}
             case "ER00" -> { return "There is no such command. Please enter '?' to see the manual.";}
             default -> {}
         }

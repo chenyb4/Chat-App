@@ -216,6 +216,7 @@ public class Client {
             //Allow requesting session key only once
             SecretKey key = sendSessionKeyRequest(username);
             //Add the session key to hashmap
+            //Key can return null
             if(key != null){
                 sessionKeys.putIfAbsent(username,key);
             }
