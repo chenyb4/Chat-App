@@ -60,6 +60,12 @@ public class MessageProcessor {
         return nameWithStar+" says to you secretly: "+fullMessage;
     }
 
+    /**
+     * Process the message to the receiver
+     * @param lineParts The line of message seperated by space and stored in array
+     * @return the message returned to and handled by method convertMessage
+     */
+
     public static String processPME(String[] lineParts){
         //e.g. PME <username of the sender> <1> <encrypted message>
         String nameWithStar=convertNameToIncludeAuthInfo(lineParts);
@@ -68,6 +74,48 @@ public class MessageProcessor {
             fullMessage+=lineParts[i]+" ";
         }
         return nameWithStar+" has sent an encrypted message which says: "+fullMessage;
+    }
+
+    /**
+     * Client receives a file request
+     * @param lineParts The line of message seperated by space and stored in array
+     * @return the message returned to and handled by method convertMessage
+     */
+
+    public static String processAAFT (String[] lineParts) {
+        //e.g. AAFT <C1 username> <1> <file name> <transfer id>
+        String nameWithStar=convertNameToIncludeAuthInfo(lineParts);
+        String fileName = lineParts[3];
+        String transferId = lineParts[4];
+        return nameWithStar+" has sent you a file request with name: " + fileName + " and id: " + transferId ;
+    }
+
+    /**
+     * Client accepts the file request
+     * @param lineParts The line of message seperated by space and stored in array
+     * @return the message returned to and handled by method convertMessage
+     */
+
+    public static String processRAFTA (String[] lineParts) {
+        //e.g. RAFTA <C2 username> <1> <file name> <transfer id>
+        String nameWithStar=convertNameToIncludeAuthInfo(lineParts);
+        String fileName = lineParts[3];
+        String transferId = lineParts[4];
+        return nameWithStar+" has accepted your file: " + fileName + " with id: " + transferId ;
+    }
+
+    /**
+     * Client rejects the file request
+     * @param lineParts The line of message seperated by space and stored in array
+     * @return the message returned to and handled by method convertMessage
+     */
+
+    public static String processRAFTR (String[] lineParts) {
+        //e.g. RAFTR <C2 username> <1> <file name> <transfer id>
+        String nameWithStar=convertNameToIncludeAuthInfo(lineParts);
+        String fileName = lineParts[3];
+        String transferId = lineParts[4];
+        return nameWithStar+" has rejected your file: " + fileName + " with id: " + transferId ;
     }
 
     /**
@@ -161,9 +209,13 @@ public class MessageProcessor {
                     return temp;
                 }
             }
-            case "AUTH"->{return "You are now authenticated.";}
+            case "AUTH"-> {return "You are now authenticated.";}
             //this space is for file transfer messages
-
+            case "AAFT" -> {
+                return "Your file request was sent to " + lineParts[2] + " ";
+            }
+            case "RAFTA" -> {return "You accepted the file request with id "+ lineParts[2];}
+            case "RAFTR" -> {return "You Rejected the file request with id "+ lineParts[2];}
             case "LG"->{return "You have left the group.";}
             //termination
             case "Goodbye" -> {return "You have exited the chat room.";}

@@ -45,14 +45,14 @@ class IntegrationSingleUserTests {
     }
 
     @Test
-    @DisplayName("RQ-S100 - receiveInfoMessage")
+    @DisplayName("TC1.1.6 - receiveInfoMessage")
     void receiveInfoMessage() {
         String firstLine = receiveLineWithTimeout(in);
         assertEquals("INFO welcome to chat room",firstLine);
     }
 
     @Test
-    @DisplayName("RQ-U100 - loginSucceedsWithOK")
+    @DisplayName("TC1.1.7 - loginSucceedsWithOK")
     void loginSucceedsWithOK() {
         receiveLineWithTimeout(in); //info message
         out.println("CONN myname");
@@ -62,7 +62,7 @@ class IntegrationSingleUserTests {
     }
 
     @Test
-    @DisplayName(" - loginEmptyNameWithER02")
+    @DisplayName("2.1.9 - loginEmptyNameWithER02")
     void loginEmptyNameWithER02() {
         receiveLineWithTimeout(in); //info message
         out.println("CONN vv");
@@ -72,7 +72,7 @@ class IntegrationSingleUserTests {
     }
 
     @Test
-    @DisplayName("RQ-U100 - Bad Weather - loginInvalidCharactersWithER02")
+    @DisplayName("2.2.1 - Bad Weather - loginInvalidCharactersWithER02")
     void loginInvalidCharactersWithER02(){
         receiveLineWithTimeout(in); //info message
         out.println("CONN *a*");
@@ -82,7 +82,7 @@ class IntegrationSingleUserTests {
     }
 
     @Test
-    @DisplayName("RQ-S100 - pingShouldBeReceivedOnCorrectTime")
+    @DisplayName("TC1.1.8 - pingShouldBeReceivedOnCorrectTime")
     void pingShouldBeReceivedOnCorrectTime(TestReporter testReporter) {
         receiveLineWithTimeout(in); //info message
         out.println("CONN myname");
@@ -94,10 +94,8 @@ class IntegrationSingleUserTests {
             Instant start = Instant.now();
             String ping = in.readLine();
             Instant finish = Instant.now();
-
             // Make sure the correct response is received
             assertEquals("PING", ping);
-
             // Also make sure the response is not received too early
             long timeElapsed = Duration.between(start, finish).toMillis();
             testReporter.publishEntry("timeElapsed", ""+timeElapsed);
