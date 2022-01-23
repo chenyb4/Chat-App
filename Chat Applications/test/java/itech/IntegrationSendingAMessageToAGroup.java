@@ -39,16 +39,6 @@ class IntegrationSendingAMessageToAGroup {
     }
 
     @Test
-    @DisplayName("TC1.9 - loginUser")
-    void loginUser() {
-        receiveLineWithTimeout(in); //info message
-        out.println("CONN Lukman");
-        out.flush();
-        String serverResponse = receiveLineWithTimeout(in);
-        assertEquals("OK Lukman", serverResponse);
-    }
-
-    @Test
     @DisplayName("TC1.6 - creatingAGroup")
     void creatingAGroup() {
         receiveLineWithTimeout(in);//info message
@@ -62,16 +52,13 @@ class IntegrationSendingAMessageToAGroup {
     }
 
     @Test
-    @DisplayName("TC1.1.1 - sendMessageToGroupWithoutJoining")
-    void sendMessageToGroupWithoutJoining() {
+    @DisplayName("TC1.9 - loginUser")
+    void loginUser() {
         receiveLineWithTimeout(in); //info message
-        out.println("CONN rgf");
-        out.flush();
-        receiveLineWithTimeout(in);//OK rgf
-        out.println("BCSTG saxion hello");
+        out.println("CONN Lukman");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
-        assertTrue(serverResponse.startsWith("ER08"), "Join the group first: "+serverResponse);
+        assertEquals("OK Lukman", serverResponse);
     }
 
     @Test
@@ -81,13 +68,26 @@ class IntegrationSendingAMessageToAGroup {
         out.println("CONN juj");
         out.flush();
         receiveLineWithTimeout(in); //OK juj
-        out.println("JG saxion");
+        out.println("CG temp");
         out.flush();
-        receiveLineWithTimeout(in); //OK JG saxion
+        receiveLineWithTimeout(in); //OK CG saxion
+        out.println("BCSTG temp hello");
+        out.flush();
+        String serverResponse = receiveLineWithTimeout(in);
+        assertEquals("OK BCSTG temp hello", serverResponse);
+    }
+
+    @Test
+    @DisplayName("TC2.1.7 - sendMessageToGroupWithoutJoining")
+    void sendMessageToGroupWithoutJoining() {
+        receiveLineWithTimeout(in); //info message
+        out.println("CONN rgf");
+        out.flush();
+        receiveLineWithTimeout(in);//OK rgf
         out.println("BCSTG saxion hello");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
-        assertEquals("OK BCSTG saxion hello", serverResponse);
+        assertTrue(serverResponse.startsWith("ER08"), "Join the group first: "+serverResponse);
     }
 
     private String receiveLineWithTimeout(BufferedReader reader){
