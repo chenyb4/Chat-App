@@ -111,6 +111,38 @@ public class UserInterface {
                     System.err.println(e.getMessage());
                 }
             }
+            case "-FT" -> {
+                String receiverUsername;
+                String filePath;
+                System.out.println("Please enter the receiver's username: >> ");
+                receiverUsername = readString();
+                if (receiverUsername.equals(ClientHandler.myOwnUsername)){
+                    System.err.println("You cannot send the file to your self");
+                } else {
+                    System.out.println("please enter the file path: >> ");
+                    filePath = readString();
+                    try {
+                        client.sendFileRequest(receiverUsername,filePath);
+                    } catch (Exception e){
+                        System.err.println(e.getMessage());
+                    }
+                }
+            }
+            case "-FL" -> {
+                String id;
+                String choice;
+                System.out.println("Please enter the transfer id: >> ");
+                id = readString();
+                System.out.println("Do you want to accept the file or reject it? (y/n)");
+                choice = readString();
+                if (choice.equals("y")){
+                    client.acceptFileRequest(id);
+                } else if (choice.equals("n")){
+                    client.rejectFileRequest(id);
+                } else {
+                    System.err.println("Invalid input for choice");
+                }
+            }
             case "-P" -> {
                 String username;
                 String message;
@@ -154,7 +186,7 @@ public class UserInterface {
                 "\"-AU\": to authenticate yourself.\n" +
                         "\"-FT\": to Send a file to a certain user.\n" +
                 //Here where the user either accept or reject the file
-                        "\"-FT\": to see your list of files that were sent to you.\n" +
+                        "\"-FL\": to either accept or reject a file request.\n" +
                 "\"-Q\": to quit the chat app.\n\n"
                 );
     }

@@ -38,7 +38,17 @@ public class MessageConverter {
                 return MessageProcessor.processPM(lineParts);
             }
             case "PME" -> {
+                //server tells me that someone sent me a pme
                 return MessageProcessor.processPME(lineParts);
+            }
+            case "AAFT" -> {
+                return MessageProcessor.processAAFT(lineParts);
+            }
+            case "RAFTA" -> {
+                return MessageProcessor.processRAFTA(lineParts);
+            }
+            case "RAFTR" -> {
+                return MessageProcessor.processRAFTR(lineParts);
             }
             case "CG"->{
                 //server tells me that some mofo created a group
@@ -71,6 +81,15 @@ public class MessageConverter {
                 String groupName=lineParts[3];
                 String nameWithStar=MessageProcessor.convertNameToIncludeAuthInfo(lineParts);
                 return nameWithStar+" left group "+groupName+".";
+            }
+            case "File"-> {
+                //e.g File is stored in: <file path>
+                //e.g File is corrupted
+                if (lineParts[2].equals("stored")){
+                    return "The file is stored in " + lineParts[4];
+                } else if (lineParts[2].equals("corrupted")) {
+                    return "The file was corrupted during transmission";
+                }
             }
             case "ER01" -> {return "This user name is already used. Please choose a different username!";}
             case "ER02" -> {return "The username you enter has an invalid format. Only characters, numbers and underscores are allowed!";}

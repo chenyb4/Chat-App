@@ -235,6 +235,58 @@ public class Client {
     }
 
     /**
+     * Send a file request to a certain client
+     * @param username of the receiver
+     * @param filePath to be sent to the client
+     */
+
+    public void sendFileRequest (String username,String filePath) {
+        //check if the user is logged in
+        checkLogin();
+        if (username.equals("")){
+            //check if the username input is correct
+            throw new IllegalStateException("the username is not allowed to be an empty string");
+        } else if (filePath.equals("")) {
+            //check if the file path input is correct
+            throw new IllegalStateException("the file path is not allowed to be an empty string");
+        } else {
+            sendMessage("AAFT " + username + " " + filePath + "\n");
+        }
+    }
+
+    /**
+     * Accept a file request
+     * @param id of the file
+     */
+
+    public void acceptFileRequest (String id) {
+        //check if the user is logged in
+        checkLogin();
+        if (id.equals("")){
+            //check if the username input is correct
+            throw new IllegalStateException("the id is not allowed to be an empty string");
+        } else {
+            sendMessage("RAFTA " + id);
+        }
+    }
+
+    /**
+     * Reject a file request
+     * @param id of the file
+     */
+
+    public void rejectFileRequest (String id) {
+        //check if the user is logged in
+        checkLogin();
+        if (id.equals("")){
+            //check if the username input is correct
+            throw new IllegalStateException("the id is not allowed to be an empty string");
+        } else {
+            sendMessage("RAFTR " + id);
+        }
+    }
+
+    /**
      * create a group with provide group name
      * @param groupName the name of the group we want to create
      */
