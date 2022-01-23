@@ -7,10 +7,9 @@ import java.net.Socket;
 import java.util.Properties;
 
 import static java.time.Duration.ofMillis;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
+import static org.junit.jupiter.api.Assertions.*;
 
-class IntegrationPacketBreakup {
+class IntegrationLeavingAGroup {
 
     private static Properties props = new Properties();
 
@@ -22,7 +21,7 @@ class IntegrationPacketBreakup {
 
     @BeforeAll
     static void setupAll() throws IOException {
-        InputStream in = IntegrationPacketBreakup.class.getResourceAsStream("testconfig.properties");
+        InputStream in = IntegrationLeavingAGroup.class.getResourceAsStream("testconfig.properties");
         props.load(in);
         in.close();
     }
@@ -40,19 +39,29 @@ class IntegrationPacketBreakup {
     }
 
     @Test
-    @DisplayName("TC1.1.2 - flushingMultipleTimesIsAllowed")
-    void flushingMultipleTimesIsAllowed() {
+    @DisplayName("RQ-U100 - loginSucceedsWithOK")
+    void loginSucceedsWithOK() {
         receiveLineWithTimeout(in); //info message
-        out.print("CONN m");
-        out.flush();
-        out.print("yname\r\nBC");
-        out.flush();
-        out.print("ST a\r\n");
+        out.println("CONN myname");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
         assertEquals("OK myname", serverResponse);
-        serverResponse = receiveLineWithTimeout(in);
-        assertEquals("OK BCST a", serverResponse);
+    }
+
+    @Test
+    @DisplayName("TC1.1.3 - LeavingAGroup")
+    void leavingAGroup() {
+        receiveLineWithTimeout(in);//info message
+        out.println("CONN john");
+        out.flush(); //Login first
+        receiveLineWithTimeout(in); //OK john
+        out.println("CG saxion");
+        out.flush();
+        receiveLineWithTimeout(in); //OK CG saxion
+        out.println("LG saxion");
+        out.flush();
+        String serverResponse = receiveLineWithTimeout(in);
+        assertEquals("OK LG saxion", serverResponse);
     }
 
     private String receiveLineWithTimeout(BufferedReader reader){

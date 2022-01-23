@@ -7,10 +7,9 @@ import java.net.Socket;
 import java.util.Properties;
 
 import static java.time.Duration.ofMillis;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
+import static org.junit.jupiter.api.Assertions.*;
 
-class IntegrationPacketBreakup {
+class IntegrationQuitingServer {
 
     private static Properties props = new Properties();
 
@@ -22,7 +21,7 @@ class IntegrationPacketBreakup {
 
     @BeforeAll
     static void setupAll() throws IOException {
-        InputStream in = IntegrationPacketBreakup.class.getResourceAsStream("testconfig.properties");
+        InputStream in = IntegrationQuitingServer.class.getResourceAsStream("testconfig.properties");
         props.load(in);
         in.close();
     }
@@ -40,19 +39,16 @@ class IntegrationPacketBreakup {
     }
 
     @Test
-    @DisplayName("TC1.1.2 - flushingMultipleTimesIsAllowed")
-    void flushingMultipleTimesIsAllowed() {
+    @DisplayName("TC1.1.5 - quitTheServer")
+    void quitTheServer() {
         receiveLineWithTimeout(in); //info message
-        out.print("CONN m");
+        out.println("CONN myname");
         out.flush();
-        out.print("yname\r\nBC");
-        out.flush();
-        out.print("ST a\r\n");
+        receiveLineWithTimeout(in); //OK myname
+        out.println("QUIT");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
-        assertEquals("OK myname", serverResponse);
-        serverResponse = receiveLineWithTimeout(in);
-        assertEquals("OK BCST a", serverResponse);
+        assertEquals("OK Goodbye", serverResponse);
     }
 
     private String receiveLineWithTimeout(BufferedReader reader){

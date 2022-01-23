@@ -17,7 +17,7 @@ class IntegrationLineEndings {
     private BufferedReader in;
     private PrintWriter out;
 
-    private final static int max_delta_allowed_ms = 100;
+    private final static int max_delta_allowed_ms = 1000;
 
     @BeforeAll
     static void setupAll() throws IOException {
@@ -62,8 +62,26 @@ class IntegrationLineEndings {
         assertEquals("OK BCST a", serverResponse);
     }
 
+    @Test
+    @DisplayName("TC2.1.8 - sendUnknownCommand")
+    void sendUnknownCommand() {
+        receiveLineWithTimeout(in); //info message
+        out.print("CONN Lukman");
+        String serverResponse = receiveLineWithTimeout(in);
+        assertEquals("OK Lukman", serverResponse);
+        out.print("dsadsadas");
+        out.flush();
+        serverResponse = receiveLineWithTimeout(in);
+        assertTrue(serverResponse.startsWith("ER00"), "Unknown command: "+serverResponse);
+    }
+
     private String receiveLineWithTimeout(BufferedReader reader){
-        return assertTimeoutPreemptively(ofMillis(max_delta_allowed_ms), () -> reader.readLine());
+        try {
+            return  reader.readLine();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
 }

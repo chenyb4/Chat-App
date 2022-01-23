@@ -18,7 +18,7 @@ public class Server {
     private Socket clientSocket;
     private List<Client> clients = new LinkedList<>();
     private List<Group> groups = new LinkedList<>();
-    private final boolean SHOULD_PING = false;
+    private final boolean SHOULD_PING = true;
     private final ServerHandler serverHandler = new ServerHandler();
 
     //File transfer
@@ -539,6 +539,7 @@ public class Server {
      */
 
     public void removeClient (Client client) {
+        client.stopStreams();
         clients.remove(client);
         client.setActive(false);
         for (Group g:groups) {
@@ -546,7 +547,6 @@ public class Server {
             g.sendMessageToGroupMembersWhenLeft(client);
             g.removeClientFromGroup(client);
         }
-        client.stopStreams();
         stats();
     }
 

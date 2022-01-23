@@ -48,7 +48,7 @@ class IntegrationSingleUserTests {
     @DisplayName("RQ-S100 - receiveInfoMessage")
     void receiveInfoMessage() {
         String firstLine = receiveLineWithTimeout(in);
-        assertTrue(firstLine.matches("INFO Welcome to the server 1\\..*"));
+        assertEquals("INFO welcome to chat room",firstLine);
     }
 
     @Test
@@ -62,13 +62,13 @@ class IntegrationSingleUserTests {
     }
 
     @Test
-    @DisplayName("RQ-U100 - Bad Weather - loginEmptyNameWithER02")
+    @DisplayName(" - loginEmptyNameWithER02")
     void loginEmptyNameWithER02() {
         receiveLineWithTimeout(in); //info message
-        out.println("CONN");
+        out.println("CONN vv");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
-        assertEquals("ER02 Username has an invalid format (only characters, numbers and underscores are allowed)", serverResponse);
+        assertEquals("ER02 Username has an invalid format (only characters and numbers are allowed. Space is not allowed)", serverResponse);
     }
 
     @Test
@@ -78,7 +78,7 @@ class IntegrationSingleUserTests {
         out.println("CONN *a*");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
-        assertEquals("ER02 Username has an invalid format (only characters, numbers and underscores are allowed)", serverResponse);
+        assertEquals("ER02 Username has an invalid format (only characters and numbers are allowed. Space is not allowed)", serverResponse);
     }
 
     @Test

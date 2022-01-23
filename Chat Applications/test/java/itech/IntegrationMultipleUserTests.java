@@ -18,7 +18,7 @@ class IntegrationMultipleUserTests {
     private BufferedReader inUser1,inUser2;
     private PrintWriter outUser1,outUser2;
 
-    private final static int max_delta_allowed_ms = 100;
+    //private final static int max_delta_allowed_ms = 100;
 
     @BeforeAll
     static void setupAll() throws IOException {
@@ -69,7 +69,7 @@ class IntegrationMultipleUserTests {
         assertEquals("OK BCST messagefromuser1", fromUser1);
 
         String fromUser2 = receiveLineWithTimeout(inUser2); //BCST from user1
-        assertEquals("BCST user1 messagefromuser1", fromUser2);
+        assertEquals("BCST user1 0 messagefromuser1", fromUser2);
 
         //send BCST from USER2
         outUser2.println("BCST messagefromuser2");
@@ -101,7 +101,12 @@ class IntegrationMultipleUserTests {
     }
 
     private String receiveLineWithTimeout(BufferedReader reader){
-        return assertTimeoutPreemptively(ofMillis(max_delta_allowed_ms), () -> reader.readLine());
+        try {
+            return reader.readLine();
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+        }
+        return null;
     }
 
 }
