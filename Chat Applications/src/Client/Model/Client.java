@@ -1,5 +1,6 @@
 package Client.Model;
 
+import Client.Exception.ClientException;
 import Server.MessageEncryptor;
 
 import javax.crypto.SecretKey;
@@ -22,9 +23,7 @@ public class Client {
     private PrintWriter out;
     private BufferedReader in;
     private String userName = "";
-    private boolean isAuth = false;
     private boolean isConnected = false;
-    private boolean receivedPong = false;
 
     //Encryption
     private PublicKey publicKey;
@@ -52,22 +51,25 @@ public class Client {
 
     private void checkLogin(){
         if (this.userName.equals("")) {
-            throw new IllegalStateException("Please login first");
+            throw new ClientException("Please login first!");
         }
     }
 
     /**
      * @param ip address
      * @param port number
-     * @throws IOException caused by Stream either input or output
      */
 
 
-    public void startConnection (String ip, int port) throws IOException {
+    public void startConnection (String ip, int port) {
         System.out.println("Client started to port "+port);
-        clientSocket = new Socket(ip, port);
-        in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-        out = new PrintWriter(clientSocket.getOutputStream());
+        try {
+            clientSocket = new Socket(ip, port);
+            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            out = new PrintWriter(clientSocket.getOutputStream());
+        } catch (IOException io) {
+            System.err.println("Couldn't connect!, check the server");
+        }
     }
 
     /**
@@ -89,14 +91,14 @@ public class Client {
         if (userName != null && userName.length() > 2) {
             for (int i = 0; i < userName.length(); i++) {
                 if (!Character.isLetterOrDigit(userName.charAt(i))){
-                    throw new IllegalArgumentException("Only characters and numbers are allowed. Space is not allowed!");
+                    throw new ClientException("Only characters and numbers are allowed. Space is not allowed!");
                 }
             }
             this.userName = userName;
             isConnected = true;
-            sendMessage("CONN "+userName+"\n");
+            sendMessage("CONN " + userName);
         } else {
-            throw new IllegalArgumentException("Username has an invalid format, the length should be higher than 2");
+            throw new ClientException("Username has an invalid format, the length should be higher than 2");
         }
     }
 
@@ -109,9 +111,9 @@ public class Client {
     public void sendBroadcastMessage (String msg) {
         checkLogin();
         if (msg == null || msg.equals("")) {
-            throw new IllegalArgumentException("Cannot send empty message!");
+            throw new ClientException("Cannot send empty message!");
         } else {
-            sendMessage("BCST "+msg+"\n");
+            sendMessage("BCST " + msg);
         }
     }
 
@@ -122,7 +124,7 @@ public class Client {
 
     public void stopConnection () throws IOException {
         isConnected = false;
-        sendMessage("QUIT\n");
+        sendMessage("QUIT");
         in.close();
         out.close();
         clientSocket.close();
@@ -134,7 +136,7 @@ public class Client {
 
     public void sendPong() {
         //no condition to check, only logged-in users will receive ping from server
-        sendMessage("PONG"+"\n");
+        sendMessage("PONG");
     }
 
     /**
@@ -142,7 +144,8 @@ public class Client {
      */
 
     public void viewAllClients () {
-        sendMessage("VCC"+"\n");
+        checkLogin();
+        sendMessage("VCC");
     }
 
     /**
@@ -155,12 +158,12 @@ public class Client {
         checkLogin();
         if (username.equals("")) {
             //check if the username input is correct
-            throw new IllegalStateException("the username is not allowed to be an empty string");
+            throw new ClientException("Invalid username!");
         } else if (msg == null || msg.equals("")) {
             //check if the message entered is correct
-            throw new IllegalArgumentException("Cannot send empty message!");
+            throw new ClientException("Cannot send empty message!");
         } else {
-            sendMessage("PM "+username+" "+msg+"\n");
+            sendMessage("PM " + username + " " + msg);
         }
     }
 
@@ -174,19 +177,19 @@ public class Client {
         checkLogin();
         if (username.equals("")) {
             //check if the username input is correct
-            throw new IllegalStateException("the username is not allowed to be an empty string");
+            throw new ClientException("Invalid username!");
         } else {
             //Send my public key to the receiver to get a session key
             String publicKey = MessageEncryptor.encode(this.publicKey.getEncoded());
-            sendMessage("RSS "+username+" "+publicKey+"\n");
+            sendMessage("RSS " + username + " " + publicKey);
             String sessionKey;
             try {
                 //OK RSS <C2 username> <encrypted session key>
                 String[] split = in.readLine().split(" ");
                 if (split[0].equals("ER04")){
-                    System.out.println("The user does not exist.");
+                    System.err.println("The user does not exist.");
                 } else if (split[0].equals("ER13")) {
-                    System.out.println("You cannot send a message to yourself.");
+                    System.err.println("You cannot send a message to yourself.");
                 } else {
                     //session key on the third index
                     sessionKey = split[3];
@@ -218,18 +221,18 @@ public class Client {
             //Add the session key to hashmap
             //Key can return null
             if(key != null){
-                sessionKeys.putIfAbsent(username,key);
+                sessionKeys.put(username,key);
             }
         }
         if (sessionKeys.get(username) != null){
             //Username is already checked
             if (msg == null || msg.equals("")) {
                 //check if the message entered is correct
-                throw new IllegalArgumentException("Cannot send empty message!");
+                throw new ClientException("Cannot send empty message!");
             } else {
                 //Encrypt the message with the gotten session key
                 String message = MessageEncryptor.encrypt(sessionKeys.get(username),msg);
-                sendMessage("PME " + username + " " + message + "\n");
+                sendMessage("PME " + username + " " + message);
             }
         }
     }
@@ -245,12 +248,12 @@ public class Client {
         checkLogin();
         if (username.equals("")){
             //check if the username input is correct
-            throw new IllegalStateException("the username is not allowed to be an empty string");
+            throw new ClientException("Invalid username!");
         } else if (filePath.equals("")) {
             //check if the file path input is correct
-            throw new IllegalStateException("the file path is not allowed to be an empty string");
+            throw new ClientException("The file path is not allowed to be an empty string");
         } else {
-            sendMessage("AAFT " + username + " " + filePath + "\n");
+            sendMessage("AAFT " + username + " " + filePath);
         }
     }
 
@@ -264,7 +267,7 @@ public class Client {
         checkLogin();
         if (id.equals("")){
             //check if the username input is correct
-            throw new IllegalStateException("the id is not allowed to be an empty string");
+            throw new ClientException("The id is not allowed to be an empty string");
         } else {
             sendMessage("RAFTA " + id);
         }
@@ -280,7 +283,7 @@ public class Client {
         checkLogin();
         if (id.equals("")){
             //check if the username input is correct
-            throw new IllegalStateException("the id is not allowed to be an empty string");
+            throw new ClientException("The id is not allowed to be an empty string");
         } else {
             sendMessage("RAFTR " + id);
         }
@@ -296,9 +299,9 @@ public class Client {
         checkLogin();
         if (groupName.equals("")) {
             //check if the group name input is correct
-            throw new IllegalStateException("the group's name is not allowed to be an empty string");
+            throw new ClientException("The group's name is not allowed to be an empty string");
         } else {
-            sendMessage("CG " + groupName + "\n");
+            sendMessage("CG " + groupName);
         }
 
     }
@@ -313,9 +316,9 @@ public class Client {
         checkLogin();
         if (groupName.equals("")) {
             //check if the group name input is correct
-            throw new IllegalStateException("the group's name is not allowed to be an empty string");
+            throw new ClientException("The group's name is not allowed to be an empty string");
         } else {
-            sendMessage("JG "+groupName+"\n");
+            sendMessage("JG " + groupName);
         }
     }
 
@@ -326,7 +329,7 @@ public class Client {
     public void viewExistingGroups () {
         //check if the user is logged in
         checkLogin();
-        sendMessage("VEG"+"\n");
+        sendMessage("VEG");
     }
 
     /**
@@ -339,9 +342,9 @@ public class Client {
         checkLogin();
         if (groupName.equals("")) {
             //check if the group name input is correct
-            throw new IllegalStateException("the group's name is not allowed to be an empty string");
+            throw new ClientException("The group's name is not allowed to be an empty string");
         } else {
-            sendMessage("BCSTG "+groupName+" "+msg+"\n");
+            sendMessage("BCSTG " + groupName + " " + msg);
         }
     }
 
@@ -351,12 +354,13 @@ public class Client {
      */
 
     public void leaveGroup(String groupName) {
+        //check if the user is logged in
         checkLogin();
         if (groupName.equals("")) {
             //check if the group name input is correct
-            throw new IllegalStateException("the group's name is not allowed to be an empty string");
+            throw new ClientException("The group's name is not allowed to be an empty string");
         } else {
-            sendMessage("LG "+groupName+"\n");
+            sendMessage("LG " + groupName);
         }
     }
 
@@ -366,8 +370,9 @@ public class Client {
      */
 
     public void authenticate(String password){
+        //check if the user is logged in
         checkLogin();
-        sendMessage("AUTH"+" "+password+"\n");
+        sendMessage("AUTH " + password);
     }
 
     //Getters
@@ -379,16 +384,12 @@ public class Client {
         return isConnected;
     }
 
-    public String getUserName() {
-        return userName;
+    public Socket getClientSocket() {
+        return clientSocket;
     }
 
     //Setters
     public void setConnected(boolean connected) {
         isConnected = connected;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
     }
 }

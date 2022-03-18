@@ -38,7 +38,7 @@ public class MessageEncryptor {
      * @return decrypted message
      */
 
-    //Asymmetric encryption
+    //Asymmetric decryption
     public static String decrypt (PrivateKey privateKey, String secretKey) {
         try {
             byte[] encryptedBytes = decode(secretKey);
@@ -83,7 +83,7 @@ public class MessageEncryptor {
      * @return the decrypted message
      */
 
-    //Symmetric encryption
+    //Symmetric decryption
     public static String decrypt (SecretKey secretKey,String encryptedMessage) {
         try {
             byte[] encryptedBytes = decode(encryptedMessage);

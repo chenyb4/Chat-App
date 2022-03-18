@@ -1,6 +1,7 @@
 package Client.Model;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -8,7 +9,6 @@ import Client.MessageConverter;
 
 public class ClientHandler{
 
-    private boolean pingReceived = true;
     private Client client;
     public static String myOwnUsername = "";
 
@@ -25,7 +25,7 @@ public class ClientHandler{
             String welcomeMessage = client.getIn().readLine();
             System.out.println(MessageConverter.convertMessage(welcomeMessage));
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println(e.getMessage());
         }
     }
 
@@ -39,74 +39,37 @@ public class ClientHandler{
             System.out.print("Please enter your username: >> ");
             try {
                 userName = readString();
-                myOwnUsername=userName;
+                myOwnUsername = userName;
                 client.connectWithUserName(userName);
             }   catch (IllegalArgumentException | IOException e) {
                 System.err.println(e.getMessage());
-                System.out.println();
             }
         }
     }
 
     public void startThreadForReadingMessages() {
         //Thread for reading the messages from the server
-        Thread messageHandler = new Thread(() -> {
+        new Thread(() -> {
             while (client.isConnected()){
                 //This will read and print the messages from the server.
-                receiveResponseFromServer();
-            }
-        });
-        messageHandler.start();
-    }
-
-    private void receiveResponseFromServer () {
-        try {
-            String temp = "";
-            boolean messageReceivedFromTheServer = client.getIn().ready();
-            if (messageReceivedFromTheServer){
-                temp = client.getIn().readLine();
-                if (temp != null){
-                    if(temp.equals("PING")){
-                        //Once PING is received, PONG will be sent automatically
-                        client.sendPong();
-                        pingReceived = true;
-                    } else {
-                        String messageConverted=MessageConverter.convertMessage(temp);
-                        String[] lineParts=messageConverted.split(",");
-
-                        if(lineParts[0].equals("You have successfully logged in to the chat room")){
-                            System.out.println(messageConverted+"\n");
-                            UserInterface.menu();
-                        }else{
+                try {
+                    String message = client.getIn().readLine();
+                    if (message != null){
+                        MessageConverter.setClient(client);
+                        String messageConverted = MessageConverter.convertMessage(message);
+                        // Check if the message is empty strings
+                        if (!messageConverted.equals("")) {
                             System.out.println(messageConverted);
                         }
-
                     }
+                } catch (IOException e) {
+                    //Check for server errors
+                    System.err.println("Server got disconnected!, shutting down....");
+                    System.exit(0);
+                    break;
                 }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * This will check for any server unexpected errors every 20 seconds.
-     */
-
-    public void checkForServerErrors () {
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                if (pingReceived){
-                    pingReceived = false;
-                } else {
-                    System.err.println("Server is disconnected!");
-                    client.setConnected(false);
-                    System.exit(500);
-                }
-            }
-        },0,20000);
+        }).start();
     }
 
     /**
@@ -116,12 +79,11 @@ public class ClientHandler{
     public void startThreadForSendingMessages () {
         UserInterface userInterface = new UserInterface(client);
         //Thread for sending messages to the server
-        Thread SendingMessageHandler = new Thread(() -> {
+        new Thread(() -> {
             while (client.isConnected()){
                 userInterface.userInterface();
             }
-        });
-        SendingMessageHandler.start();
+        }).start();
     }
 
     /**

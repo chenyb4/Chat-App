@@ -234,7 +234,6 @@ public class MessageProcessor {
      */
 
     private static String[] convertNameString(String nameString){
-        String[] lineParts=nameString.split(",");
-        return lineParts;
+        return nameString.split(",");
     }
 }

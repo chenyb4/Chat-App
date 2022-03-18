@@ -1,16 +1,20 @@
 package Client;
 
-import Server.Model.Message;
+import Client.Model.Client;
 
 public class MessageConverter {
 
-
+    private static Client client;
 
     public static String convertMessage(String m){
         //String fullMessage="";
         if(m == null || m.equals("")){
             //no message returned, the only situation is that the message is not sent
             return "(message not sent)";
+        }
+
+        if (m.equals("PING")){
+            client.sendPong();
         }
 
         if (m.contains("INFO")){
@@ -111,16 +115,15 @@ public class MessageConverter {
             case "ER18" -> {return "The password you entered is incorrect";}
             case "ER19" -> {return "Your credential was not found in the server and cannot authenticate";}
             case "DSCN" -> {return "You have disconnected from the server due to inactivity.";}
+            case "was" -> {return "You have been removed from all groups for being idle";}
             //case "MSG" -> {return "You entered an invalid message.";}
             case "ER00" -> { return "There is no such command. Please enter '?' to see the manual.";}
-            default -> {}
         }
 
         return "";
     }
 
-
-
-
-
+    public static void setClient (Client c) {
+        client = c;
+    }
 }
