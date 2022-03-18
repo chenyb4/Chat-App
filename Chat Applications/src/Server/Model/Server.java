@@ -16,8 +16,8 @@ public class Server {
     //Fields
     private ServerSocket serverSocket;
     private Socket clientSocket;
-    private List<Client> clients = new LinkedList<>();
-    private List<Group> groups = new LinkedList<>();
+    private final List<Client> clients = new LinkedList<>();
+    private final List<Group> groups = new LinkedList<>();
     private final boolean SHOULD_PING = true;
     private final ServerHandler serverHandler = new ServerHandler();
 
@@ -127,7 +127,7 @@ public class Server {
                     }
                     case CMD_VCC -> viewConnectedClients(client);
                     case CMD_LG -> leaveGroup(client,command.getPayload());
-                    case CMD_AUTH -> authenticateClient(client,command.getPayload());
+                    case CMD_AUTH -> client.authenticateClient(clients,command.getPayload());
                     case CMD_BCSTG -> {
                         //Check if the input at least contain group name and message
                         if (lineParts.length < 2){
@@ -179,7 +179,7 @@ public class Server {
      * @param path of the file to be sent
      */
 
-    public void askClientForFileTransfer (Client sender, String username, String path) throws Exception {
+    public void askClientForFileTransfer (Client sender, String username, String path) {
         if (!serverHandler.userExists(username,clients)){
             sendMessageToClient(sender,"ER04 User does not exist");
             //To check if the file does exist
@@ -269,7 +269,7 @@ public class Server {
 
     public void stats () {
         System.out.println("Total number of clients: " + clients.size());
-        System.out.println("Number of connected clients: " + serverHandler.connectedClientsList(clients).size());
+        System.out.println("Number of connected clients: " + ServerHandler.connectedClientsList(clients).size());
     }
 
     /**
@@ -352,7 +352,7 @@ public class Server {
             sendMessageToClient(client, "ER04 User does not exist");
         } else if (client.getUserName().equals(receiver.getUserName())){
             sendMessageToClient(client,"ER13 Cannot send message to yourself");
-        } else if (msg.equals("") || msg == null){
+        } else if (msg.equals("")){
             sendMessageToClient(client,"ER12 Cannot send empty message");
         } else {
             client.setActive(true);
@@ -375,7 +375,7 @@ public class Server {
             sendMessageToClient(client, "ER04 User does not exist");
         } else if (client.getUserName().equals(receiver.getUserName())){
             sendMessageToClient(client,"ER13 Cannot send message to yourself");
-        } else if (msg.equals("") || msg == null){
+        } else if (msg.equals("")){
             sendMessageToClient(client,"ER12 Cannot send empty message");
         } else {
             client.setActive(true);
@@ -428,7 +428,7 @@ public class Server {
             client.out.print("OK " + CMD_VCC + " ");
             client.out.flush();
             System.out.print(">> [" + client.getUserName() + " " + client.isAuthenticated() + "] OK " + CMD_VCC + " ");
-            for (Client c: serverHandler.connectedClientsList(clients)) {
+            for (Client c: ServerHandler.connectedClientsList(clients)) {
                 client.out.print(c);
                 client.out.flush();
                 System.out.print(c);
@@ -480,7 +480,7 @@ public class Server {
             groups.add(group);
             group.addClientToGroup(client);
             //Send to connected clients that a group was created
-            for (Client c: serverHandler.connectedClientsList(clients)) {
+            for (Client c: ServerHandler.connectedClientsList(clients)) {
                 if (!c.getUserName().equals(client.getUserName())) {
                     c.out.println("CG " + client.getUserName() + " " + client.isAuthenticated() + " " + groupName);
                     c.out.flush();
@@ -556,10 +556,10 @@ public class Server {
      */
 
     public void sendBroadcastMessage (Client client, String message) {
-        if (message.equals("") || message == null){
+        if (message.equals("")){
             sendMessageToClient(client,"ER12 Cannot send empty message");
         } else {
-            for (Client c : serverHandler.connectedClientsList(clients)) {
+            for (Client c : ServerHandler.connectedClientsList(clients)) {
                 if (!c.getUserName().equals(client.getUserName())){
                     sendMessageToClient(c,CMD_BCST + " " + client.getUserName() + " " + client.isAuthenticated() + " " + message);
                 }
@@ -581,7 +581,7 @@ public class Server {
             sendMessageToClient(client,"ER06 Group name has an invalid format");
         } else if (!serverHandler.groupExists(groupName,groups)){
             sendMessageToClient(client, "ER07 Group name does not exist");
-        } else if (message.equals("") || message == null){
+        } else if (message.equals("")){
             sendMessageToClient(client,"ER12 Cannot send empty message");
         } else {
             Group group = serverHandler.findGroupByName(groupName,groups);
@@ -595,84 +595,14 @@ public class Server {
         }
     }
 
-    /**
-     * @param client to be set out
-     * @param username to be set to the user
-     */
-
     public void setUser (Client client,String username) {
-        client.setUserName(username);
-        client.setConnected(true);
-        client.setReceivedPong(false);
-        client.setActive(true);
-        sendMessageToClient(client,"OK "+username);
+        client.setUser(username);
         stats();
         if (SHOULD_PING){
             //Start pinging thread for each connected client
             new Thread(() -> heartBeat(client)).start();
         }
         //Check if the user is not active
-        //todo: check if new thread should be started.
-        new Thread(() -> checkClientIfIdle(client)).start();
-    }
-
-    /**
-     * @param c who wants to authenticate him/her self
-     * @param password to be stored
-     */
-
-    public void authenticateClient (Client c, String password) {
-        Client client = serverHandler.getClientFormDataProvider(c);
-        if (client == null){
-            sendMessageToClient(c,"ER19 Credentials not found on the server and cannot authenticate");
-        } else if (password.length() < 6 || password.contains(" ") || password.length() > 20 || password.contains(",")) {
-            sendMessageToClient(c, "ER10 Password has an invalid format (no comma, no space, the password should be between 6 - 20 characters)");
-        } else if (c.isAuth()) {
-            sendMessageToClient(c,"ER11 User already authenticated");
-        } else if (!PasswordHasher.comparePassword(client.getPassword(),password)) {
-            sendMessageToClient(c,"ER18 Incorrect password");
-        } else {
-            c.setAuth(true);
-            c.setActive(true);
-            for (Client clients: serverHandler.connectedClientsList(clients)) {
-                if (!clients.getUserName().equals(c.getUserName())) {
-                    clients.out.println("AUTH " + c.getUserName() + " " + c.isAuthenticated());
-                    clients.out.flush();
-                }
-            }
-            sendMessageToClient(c,"OK " + CMD_AUTH + " " + password);
-        }
-    }
-
-    /**
-     * @param client to be checked for idle
-     * todo: check if only for sending messages to a group or all messages
-     */
-
-    public void checkClientIfIdle (Client client) {
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-            //2 min = 120 sec
-            int temp = 120;
-            @Override
-            public void run() {
-                if (client.isActive()) {
-                    //Reset to 2 min
-                    temp = 120;
-                } else {
-                    temp--;
-                }
-                client.setActive(false);
-                if (temp == 0){
-                    for (Group g:groups) {
-                        g.removeClientFromGroup(client);
-                        g.sendMessageToGroupMembersWhenLeft(client);
-                    }
-                    sendMessageToClient(client,"was removed from all groups for being idle");
-                    timer.cancel();
-                }
-            }
-            //Run every second
-        },0,1000);
+        new Thread(() -> client.checkClientIfIdle(groups)).start();
     }
 }

@@ -6,6 +6,7 @@ import Server.FileChecker;
 import java.io.*;
 
 import Server.MessageEncryptor;
+import Server.PasswordHasher;
 
 import javax.crypto.KeyAgreement;
 import javax.crypto.SecretKey;
@@ -14,9 +15,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.net.Socket;
 import java.security.*;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class Client {
 
@@ -29,6 +28,7 @@ public class Client {
     private boolean isConnected = false;
     private boolean receivedPong = false;
     private boolean active = false;
+    private byte[] salt;
 
     //Encryption
     private PrivateKey privateKey;
@@ -42,8 +42,12 @@ public class Client {
     }
 
     public Client(String userName, String password) {
+        SecureRandom random = new SecureRandom();
         this.userName = userName;
         this.password = password;
+        this.salt = new byte[16];
+        //Unique salt per user
+        random.nextBytes(salt);
     }
 
     /**
@@ -192,6 +196,86 @@ public class Client {
         return null;
     }
 
+    /**
+     * @param clients that are connected to the socket
+     * @param password to be stored
+     */
+
+    public void authenticateClient (List<Client> clients, String password) {
+        Client client = ServerHandler.getClientFormDataProvider(this);
+        if (client == null){
+            sendMessageToThisClient("ER19 Credentials not found on the server and cannot authenticate");
+        } else if (password.length() < 6 || password.contains(" ") || password.length() > 20 || password.contains(",")) {
+            sendMessageToThisClient("ER10 Password has an invalid format (no comma, no space, the password should be between 6 - 20 characters)");
+        } else if (this.isAuth) {
+            sendMessageToThisClient("ER11 User already authenticated");
+        }
+        //Compare given password with the password provided
+        else if (!PasswordHasher.comparePassword(client.password,password)) {
+            sendMessageToThisClient("ER18 Incorrect password");
+        } else {
+            this.isAuth = true;
+            this.active = true;
+            for (Client c: ServerHandler.connectedClientsList(clients)) {
+                if (!c.userName.equals(this.userName)) {
+                    c.out.println("AUTH " + this.userName + " " + isAuthenticated());
+                    c.out.flush();
+                }
+            }
+            sendMessageToThisClient("OK AUTH " + password);
+        }
+    }
+
+    /**
+     * @param groups to be removed from
+     */
+
+    public void checkClientIfIdle (List<Group> groups) {
+        Client client = this;
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            //2 min = 120 sec
+            int temp = 120;
+            @Override
+            public void run() {
+                if (active) {
+                    //Reset to 2 min
+                    temp = 120;
+                } else {
+                    temp--;
+                }
+                active = false;
+                if (temp == 0){
+                    for (Group g:groups) {
+                        g.removeClientFromGroup(client);
+                        g.sendMessageToGroupMembersWhenLeft(client);
+                    }
+                    sendMessageToThisClient("was removed from all groups for being idle");
+                    timer.cancel();
+                }
+            }
+            //Run every second
+        },0,1000);
+    }
+
+    /**
+     * @param username to be set to the user
+     */
+
+    public void setUser (String username) {
+        this.userName = username;
+        this.isConnected = true;
+        this.receivedPong = false;
+        this.active = true;
+        sendMessageToThisClient("OK "+username);
+    }
+
+    public void sendMessageToThisClient(String msg) {
+        System.out.println(">> [" + userName + " " + isAuthenticated() + "] " + msg);
+        out.println(msg);
+        out.flush();
+    }
+
     //Getters
     public boolean isConnected() {
         return isConnected;
@@ -201,39 +285,11 @@ public class Client {
         return userName;
     }
 
-    public boolean isAuth() {
-        return isAuth;
-    }
-
     public boolean isReceivedPong() {
         return receivedPong;
     }
 
-    public String getPassword() {
-        return password;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public Map<Client, SecretKey> getSessionKeys() {
-        return sessionKeys;
-    }
-
     //Setters
-    public void setConnected(boolean connected) {
-        isConnected = connected;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    public void setAuth(boolean auth) {
-        isAuth = auth;
-    }
-
     public void setReceivedPong(boolean receivedPong) {
         this.receivedPong = receivedPong;
     }

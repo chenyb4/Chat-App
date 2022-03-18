@@ -5,6 +5,7 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 
 public class PasswordHasher {
@@ -20,7 +21,7 @@ public class PasswordHasher {
     private static byte[] hashPassword (final char[] password, final byte[] salt, final int iterations, final int keyLength) {
         try {
             SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512");
-            PBEKeySpec spec = new PBEKeySpec( password, salt, iterations, keyLength );
+            PBEKeySpec spec = new PBEKeySpec(password, salt, iterations, keyLength);
             SecretKey key = skf.generateSecret(spec);
             return key.getEncoded();
         } catch ( NoSuchAlgorithmException | InvalidKeySpecException e ) {
@@ -53,11 +54,13 @@ public class PasswordHasher {
      */
 
     public static String toHash(String password) {
+        //Unique salt per user
+        SecureRandom random = new SecureRandom();
+        byte[] salt = new byte[16];
+        //random.nextBytes(salt);
         int iterations = 65536;
         int keyLength = 128;
-        char[] passwordChars = password.toCharArray();
-        byte[] saltBytes = new byte[16];
-        byte[] hashedBytes = hashPassword(passwordChars, saltBytes, iterations, keyLength);
+        byte[] hashedBytes = hashPassword(password.toCharArray(), salt, iterations, keyLength);
         return toHex(hashedBytes);
     }
 

@@ -13,25 +13,26 @@ public class Main {
         String ip = "127.0.0.1";
         int port = 1337;
         client.startConnection(ip,port);
-        chat(client);
+        try {
+            chat(client);
+        } catch (Exception e){
+            System.err.println(e.getMessage());
+        }
     }
 
-    public static void chat(Client client) {
+    public static void chat(Client client) throws InterruptedException{
         ClientHandler clientHandler = new ClientHandler(client);
         //Print the welcome message from the server once the connection has been established
         clientHandler.welcomeMessage();
         //Login to the server
         clientHandler.login();
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        Thread.sleep(100);
         //Thread for reading messages from the server
         clientHandler.startThreadForReadingMessages();
-        //Check the server status, if its down, than the program will shut down.
-        clientHandler.checkForServerErrors();
         //Thread for sending Messages to the server
         clientHandler.startThreadForSendingMessages();
+        Thread.sleep(100);
+        System.out.println();
+        UserInterface.menu();
     }
 }

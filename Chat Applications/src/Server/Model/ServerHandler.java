@@ -12,7 +12,7 @@ public class ServerHandler {
      * @return an arraylist of connected clients (logged in clients).
      */
 
-    public ArrayList<Client> connectedClientsList (List<Client> clients) {
+    public static ArrayList<Client> connectedClientsList (List<Client> clients) {
         ArrayList<Client> connectedClients = new ArrayList<>();
         for (Client c: clients) {
             if (c.isConnected()){
@@ -118,7 +118,7 @@ public class ServerHandler {
         return null;
     }
 
-    public Client getClientFormDataProvider (Client c) {
+    public static Client getClientFormDataProvider (Client c) {
         for (Client client: DataProvider.listClients) {
             if (client.getUserName().equals(c.getUserName())){
                 return client;
