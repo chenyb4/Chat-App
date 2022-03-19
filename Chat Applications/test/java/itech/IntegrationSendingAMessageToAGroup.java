@@ -13,11 +13,12 @@ class IntegrationSendingAMessageToAGroup {
 
     private static Properties props = new Properties();
 
-    private Socket s;
-    private BufferedReader in;
-    private PrintWriter out;
+    private static Socket socketUser1;
+    private static Socket socketUser2;
+    private static BufferedReader inUser1,inUser2;
+    private static PrintWriter outUser1,outUser2;
 
-    private final static int max_delta_allowed_ms = 100;
+    private final static int max_delta_allowed_ms = 600;
 
     @BeforeAll
     static void setupAll() throws IOException {
@@ -28,67 +29,101 @@ class IntegrationSendingAMessageToAGroup {
 
     @BeforeEach
     void setup() throws IOException {
-        s = new Socket(props.getProperty("host"), Integer.parseInt(props.getProperty("port")));
-        in = new BufferedReader(new InputStreamReader(s.getInputStream()));
-        out = new PrintWriter(s.getOutputStream(), true);
+        socketUser1 = new Socket(props.getProperty("host"), Integer.parseInt(props.getProperty("port")));
+        inUser1 = new BufferedReader(new InputStreamReader(socketUser1.getInputStream()));
+        outUser1 = new PrintWriter(socketUser1.getOutputStream(), true);
+
+        socketUser2 = new Socket(props.getProperty("host"), Integer.parseInt(props.getProperty("port")));
+        inUser2 = new BufferedReader(new InputStreamReader(socketUser2.getInputStream()));
+        outUser2 = new PrintWriter(socketUser2.getOutputStream(), true);
     }
 
     @AfterEach
     void cleanup() throws IOException {
-        s.close();
+        socketUser1.close();
+        socketUser2.close();
+        inUser1.close();
+        outUser1.close();
+        inUser2.close();
+        outUser2.close();
     }
+
+    @AfterAll
+    static void closeAll() throws IOException {
+        socketUser1.close();
+        socketUser2.close();
+        inUser1.close();
+        outUser1.close();
+        inUser2.close();
+        outUser2.close();
+    }
+
 
     @Test
     @DisplayName("TC1.6 - creatingAGroup")
     void creatingAGroup() {
-        receiveLineWithTimeout(in);//info message
-        out.println("CONN jjj");
-        out.flush(); //Login first
-        receiveLineWithTimeout(in); //OK jjj
-        out.println("CG saxion");
-        out.flush();
-        String serverResponse = receiveLineWithTimeout(in);
-        assertEquals("OK CG saxion", serverResponse);
+        receiveLineWithTimeout(inUser1);//info message
+        outUser1.println("CONN jjj");
+        receiveLineWithTimeout(inUser1); //OK jjj
+        outUser1.println("CG saxion10");;
+        String serverResponse = receiveLineWithTimeout(inUser1);
+        assertEquals("OK CG saxion10", serverResponse);
+        outUser1.println("QUIT");
     }
 
     @Test
     @DisplayName("TC1.9 - loginUser")
     void loginUser() {
-        receiveLineWithTimeout(in); //info message
-        out.println("CONN Lukman");
-        out.flush();
-        String serverResponse = receiveLineWithTimeout(in);
+        receiveLineWithTimeout(inUser1); //info message
+        outUser1.println("CONN Lukman");
+        String serverResponse = receiveLineWithTimeout(inUser1);
         assertEquals("OK Lukman", serverResponse);
+        outUser1.println("QUIT");
     }
 
     @Test
-    @DisplayName("TC1.1.1 - sendMessageToGroup")
+    @DisplayName("TC1.11 - sendMessageToGroup")
     void sendMessageToYourSelf() {
-        receiveLineWithTimeout(in); //info message
-        out.println("CONN juj");
-        out.flush();
-        receiveLineWithTimeout(in); //OK juj
-        out.println("CG temp");
-        out.flush();
-        receiveLineWithTimeout(in); //OK CG saxion
-        out.println("BCSTG temp hello");
-        out.flush();
-        String serverResponse = receiveLineWithTimeout(in);
-        assertEquals("OK BCSTG temp hello", serverResponse);
+        receiveLineWithTimeout(inUser1); //info message
+        receiveLineWithTimeout(inUser2);
+
+        outUser1.println("CONN juj");
+        receiveLineWithTimeout(inUser1); //OK juj
+
+        outUser2.println("CONN ksdfds");
+        receiveLineWithTimeout(inUser2); //OK ksdfds
+
+        //Join the previous created group
+        outUser1.println("JG saxion10");
+        receiveLineWithTimeout(inUser1); //OK JG saxion10
+        outUser2.println("JG saxion10");
+        receiveLineWithTimeout(inUser2); //OK JG saxion10
+
+        //Send message to the group
+        outUser1.println("BCSTG saxion10 Hello");
+        receiveLineWithTimeout(inUser1); //OK BCSTG saxion10 Hello
+
+        //Check if user 2 received it
+        String serverResponse = receiveLineWithTimeout(inUser2);
+        assertEquals("BCSTG juj 0 saxion10 Hello", serverResponse);
+
+        outUser1.println("QUIT");
+        outUser2.println("QUIT");
     }
 
-    @Test
-    @DisplayName("TC2.1.7 - sendMessageToGroupWithoutJoining")
-    void sendMessageToGroupWithoutJoining() {
-        receiveLineWithTimeout(in); //info message
-        out.println("CONN rgf");
-        out.flush();
-        receiveLineWithTimeout(in);//OK rgf
-        out.println("BCSTG saxion hello");
-        out.flush();
-        String serverResponse = receiveLineWithTimeout(in);
-        assertTrue(serverResponse.startsWith("ER08"), "Join the group first: "+serverResponse);
-    }
+    //@Test
+    //@DisplayName("TC2.17 - sendMessageToGroupWithoutJoining")
+    //void sendMessageToGroupWithoutJoining() {
+    //    receiveLineWithTimeout(in); //info message
+    //    out.println("CONN rgf");
+    //    ;
+    //    receiveLineWithTimeout(in);//OK rgf
+    //    out.println("BCSTG saxion hello");
+    //    ;
+    //    String serverResponse = receiveLineWithTimeout(in);
+    //    assertTrue(serverResponse.startsWith("ER08"), "Join the group first: "+serverResponse);
+    //    out.println("QUIT");
+    //}
 
     private String receiveLineWithTimeout(BufferedReader reader){
         return assertTimeoutPreemptively(ofMillis(max_delta_allowed_ms), () -> reader.readLine());

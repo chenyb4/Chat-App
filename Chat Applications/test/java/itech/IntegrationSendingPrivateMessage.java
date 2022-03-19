@@ -13,11 +13,12 @@ class IntegrationSendingPrivateMessage {
 
     private static Properties props = new Properties();
 
-    private Socket s;
-    private BufferedReader in;
-    private PrintWriter out;
+    private static Socket socketUser1;
+    private static Socket socketUser2;
+    private static BufferedReader inUser1,inUser2;
+    private static PrintWriter outUser1,outUser2;
 
-    private final static int max_delta_allowed_ms = 100;
+    private final static int max_delta_allowed_ms = 500;
 
     @BeforeAll
     static void setupAll() throws IOException {
@@ -28,60 +29,90 @@ class IntegrationSendingPrivateMessage {
 
     @BeforeEach
     void setup() throws IOException {
-        s = new Socket(props.getProperty("host"), Integer.parseInt(props.getProperty("port")));
-        in = new BufferedReader(new InputStreamReader(s.getInputStream()));
-        out = new PrintWriter(s.getOutputStream(), true);
+        socketUser1 = new Socket(props.getProperty("host"), Integer.parseInt(props.getProperty("port")));
+        inUser1 = new BufferedReader(new InputStreamReader(socketUser1.getInputStream()));
+        outUser1 = new PrintWriter(socketUser1.getOutputStream(), true);
+
+        socketUser2 = new Socket(props.getProperty("host"), Integer.parseInt(props.getProperty("port")));
+        inUser2 = new BufferedReader(new InputStreamReader(socketUser2.getInputStream()));
+        outUser2 = new PrintWriter(socketUser2.getOutputStream(), true);
     }
 
     @AfterEach
     void cleanup() throws IOException {
-        s.close();
+        socketUser1.close();
+        socketUser2.close();
+        inUser1.close();
+        outUser1.close();
+        inUser2.close();
+        outUser2.close();
+    }
+
+    @AfterAll
+    static void closeAll() throws IOException {
+        socketUser1.close();
+        socketUser2.close();
+        inUser1.close();
+        outUser1.close();
+        inUser2.close();
+        outUser2.close();
     }
 
     @Test
-    @DisplayName("TC2.1.1 - notLoggedIn")
+    @DisplayName("TC2.11 - notLoggedIn")
     void authenticateMySelf() {
-        receiveLineWithTimeout(in); //info message
-        out.println("fsdaf");
-        out.flush();
-        String serverResponse = receiveLineWithTimeout(in);
+        receiveLineWithTimeout(inUser1); //info message
+        outUser1.println("fsdaf");
+        String serverResponse = receiveLineWithTimeout(inUser1);
         assertTrue(serverResponse.startsWith("ER03"), "User is not logged in: "+serverResponse);
     }
 
     @Test
     @DisplayName("TC1.9 - loginUser")
     void loginUser() {
-        receiveLineWithTimeout(in); //info message
-        out.println("CONN Lukman");
-        out.flush();
-        String serverResponse = receiveLineWithTimeout(in);
+        receiveLineWithTimeout(inUser1); //info message
+        outUser1.println("CONN Lukman");
+        String serverResponse = receiveLineWithTimeout(inUser1);
         assertEquals("OK Lukman", serverResponse);
     }
 
     @Test
-    @DisplayName("TC2.1.2 - sendEmptyMessage")
+    @DisplayName("TC2.12 - sendEmptyMessage")
     void sendEmptyMessage() {
-        receiveLineWithTimeout(in); //info message
-        out.println("CONN Yibing");
-        out.flush();
-        receiveLineWithTimeout(in); //OK Yibing
-        out.println("PM Lukman    ");
-        out.flush();
-        String serverResponse = receiveLineWithTimeout(in);
+        receiveLineWithTimeout(inUser1); //info message
+        outUser1.println("CONN Yibing");
+        receiveLineWithTimeout(inUser1); //OK Yibing
+        outUser1.println("PM Lukman    ");
+        String serverResponse = receiveLineWithTimeout(inUser1);
         assertTrue(serverResponse.startsWith("ER00"), "User send an empty message: "+serverResponse);
     }
 
     @Test
-    @DisplayName("TC2.1.3 - sendMessageToYourSelf")
+    @DisplayName("TC2.13 - sendMessageToYourSelf")
     void sendMessageToYourSelf() {
-        receiveLineWithTimeout(in); //info message
-        out.println("CONN John");
-        out.flush();
-        receiveLineWithTimeout(in); //OK John
-        out.println("PM John Hi");
-        out.flush();
-        String serverResponse = receiveLineWithTimeout(in);
-        assertTrue(serverResponse.startsWith("ER13"), "Invalid password: "+serverResponse);
+        receiveLineWithTimeout(inUser1); //info message
+        outUser1.println("CONN John");
+        receiveLineWithTimeout(inUser1); //OK John
+        outUser1.println("PM John Hi");
+        String serverResponse = receiveLineWithTimeout(inUser1);
+        assertTrue(serverResponse.startsWith("ER13"), "Cannot send message to yourself: "+serverResponse);
+    }
+
+    @Test
+    @DisplayName("TC1.19 - checkIfUserReceivedPrivateMessage")
+    void checkIfUserReceivedPrivateMessage() {
+        receiveLineWithTimeout(inUser1); //info message
+        outUser1.println("CONN John");
+        receiveLineWithTimeout(inUser1); //OK John
+
+        receiveLineWithTimeout(inUser2); //info message
+        outUser2.println("CONN Doe");
+        receiveLineWithTimeout(inUser2); //OK John
+
+        outUser1.println("PM Doe Hi");
+        receiveLineWithTimeout(inUser1); //OK PM Doe Hi
+        String serverResponse = receiveLineWithTimeout(inUser2);
+        assertEquals("PM John 0 Hi", serverResponse);
     }
 
     private String receiveLineWithTimeout(BufferedReader reader){

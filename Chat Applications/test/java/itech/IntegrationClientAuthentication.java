@@ -13,9 +13,11 @@ class IntegrationClientAuthentication {
 
     private static Properties props = new Properties();
 
-    private Socket s;
-    private BufferedReader in;
-    private PrintWriter out;
+    private static Socket s;
+    private static BufferedReader in;
+    private static PrintWriter out;
+
+    private final static int max_delta_allowed_ms = 600;
 
     @BeforeAll
     static void setupAll() throws IOException {
@@ -36,17 +38,23 @@ class IntegrationClientAuthentication {
         s.close();
     }
 
+    @AfterAll
+    static void closeAll() throws IOException {
+        s.close();
+        in.close();
+        out.close();
+    }
+
     @Test
     @DisplayName("TC1.8 - authenticateMySelf")
     void authenticateMySelf() {
         receiveLineWithTimeout(in); //info message
         out.println("CONN Lukman");
-        out.flush();
         receiveLineWithTimeout(in); //OK mym
         out.println("AUTH 123456");
-        out.flush();
         String serverResponse = receiveLineWithTimeout(in);
         assertEquals("OK AUTH 123456", serverResponse);
+        out.println("QUIT");
     }
 
     @Test
@@ -54,50 +62,41 @@ class IntegrationClientAuthentication {
     void alreadyAuthenticated() {
         receiveLineWithTimeout(in); //info message
         out.println("CONN Yibing");
-        out.flush();
         receiveLineWithTimeout(in); //OK Yibing
         out.println("AUTH 123456Yc");
-        out.flush();
         receiveLineWithTimeout(in); //OK AUTH 123456Yc
         out.println("AUTH 123456Yc");
-        out.flush();
         String serverResponse = receiveLineWithTimeout(in);
         assertTrue(serverResponse.startsWith("ER11"), "User already authenticated: "+serverResponse);
+        out.println("QUIT");
     }
 
     @Test
-    @DisplayName("TC2.1.6 - invalidPassword")
+    @DisplayName("TC2.16 - invalidPassword")
     void invalidPassword() {
         receiveLineWithTimeout(in); //info message
         out.println("CONN John");
-        out.flush();
         receiveLineWithTimeout(in); //OK Yibing
         out.println("AUTH 123456Ycccccc");
-        out.flush();
         String serverResponse = receiveLineWithTimeout(in);
         assertTrue(serverResponse.startsWith("ER18"), "Invalid password: "+serverResponse);
+        out.println("QUIT");
     }
 
     @Test
-    @DisplayName("TC2.1.7 - cannotAuthenticate")
+    @DisplayName("TC2.17 - cannotAuthenticate")
     void cannotAuthenticate() {
         receiveLineWithTimeout(in); //info message
         out.println("CONN hello");
-        out.flush();
         receiveLineWithTimeout(in); //OK Yibing
         out.println("AUTH 123456Ycccccc");
-        out.flush();
         String serverResponse = receiveLineWithTimeout(in);
         assertTrue(serverResponse.startsWith("ER19"), "Cannot authenticate cause your credentials were not found: "+serverResponse);
+        out.println("QUIT");
     }
 
     private String receiveLineWithTimeout(BufferedReader reader){
-        try {
-            return reader.readLine();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
+        return assertTimeoutPreemptively(ofMillis(max_delta_allowed_ms), () -> reader.readLine());
     }
 
 }

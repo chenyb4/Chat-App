@@ -13,9 +13,9 @@ class IntegrationAcceptedUsernames {
 
     private static Properties props = new Properties();
 
-    private Socket s;
-    private BufferedReader in;
-    private PrintWriter out;
+    private static Socket s;
+    private static BufferedReader in;
+    private static PrintWriter out;
 
     private final static int max_delta_allowed_ms = 100;
 
@@ -35,7 +35,14 @@ class IntegrationAcceptedUsernames {
 
     @AfterEach
     void cleanup() throws IOException {
+        //s.close();
+    }
+
+    @AfterAll
+    static void closeAll() throws IOException {
         s.close();
+        in.close();
+        out.close();
     }
 
     @Test
@@ -43,7 +50,6 @@ class IntegrationAcceptedUsernames {
     void threeCharactersIsAllowed() {
         receiveLineWithTimeout(in); //info message
         out.println("CONN mym");
-        out.flush();
         String serverResponse = receiveLineWithTimeout(in);
         assertEquals("OK mym", serverResponse);
     }
@@ -53,7 +59,6 @@ class IntegrationAcceptedUsernames {
     void userAlreadyLoggedIn() {
         receiveLineWithTimeout(in); //info message
         out.println("CONN mym");
-        out.flush();
         String serverResponse = receiveLineWithTimeout(in);
         assertTrue(serverResponse.startsWith("ER01"), "User is already logged in: "+serverResponse);
     }
@@ -63,9 +68,9 @@ class IntegrationAcceptedUsernames {
     void invalidUserNameFormat() {
         receiveLineWithTimeout(in); //info message
         out.println("CONN my");
-        out.flush();
         String serverResponse = receiveLineWithTimeout(in);
         assertTrue(serverResponse.startsWith("ER02"), "Too short username accepted: "+serverResponse);
+        out.println("QUIT");
     }
 
     @Test
@@ -73,19 +78,19 @@ class IntegrationAcceptedUsernames {
     void fourteenCharactersIsAllowed() {
         receiveLineWithTimeout(in); //info message
         out.println("CONN abcdefghijklmn");
-        out.flush();
         String serverResponse = receiveLineWithTimeout(in);
         assertEquals("OK abcdefghijklmn", serverResponse);
+        out.println("QUIT");
     }
 
     @Test
-    @DisplayName("TC2.2 - slashRIsNotAllowed")
-    void slashRIsNotAllowed() {
+    @DisplayName("TC2.2 - slashIsNotAllowed")
+    void slashIsNotAllowed() {
         receiveLineWithTimeout(in); //info message
         out.println("CONN a\rlmn");
-        out.flush();
         String serverResponse = receiveLineWithTimeout(in);
         assertTrue(serverResponse.startsWith("ER02"), "Wrong character accepted");
+        out.println("QUIT");
     }
 
     @Test
@@ -93,9 +98,9 @@ class IntegrationAcceptedUsernames {
     void bracketIsNotAllowed() {
         receiveLineWithTimeout(in); //info message
         out.println("CONN a)lmn");
-        out.flush();
         String serverResponse = receiveLineWithTimeout(in);
         assertTrue(serverResponse.startsWith("ER02"), "Wrong character accepted");
+        out.println("QUIT");
     }
 
     private String receiveLineWithTimeout(BufferedReader reader){
