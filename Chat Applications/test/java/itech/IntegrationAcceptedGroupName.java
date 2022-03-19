@@ -13,9 +13,9 @@ class IntegrationAcceptedGroupName {
 
     private static Properties props = new Properties();
 
-    private Socket s;
-    private BufferedReader in;
-    private PrintWriter out;
+    private static Socket s;
+    private static BufferedReader in;
+    private static PrintWriter out;
 
     private final static int max_delta_allowed_ms = 100;
 
@@ -33,6 +33,13 @@ class IntegrationAcceptedGroupName {
         out = new PrintWriter(s.getOutputStream(), true);
     }
 
+    @AfterAll
+    static void closeAll() throws IOException {
+        s.close();
+        in.close();
+        out.close();
+    }
+
     @AfterEach
     void cleanup() throws IOException {
         s.close();
@@ -42,13 +49,12 @@ class IntegrationAcceptedGroupName {
     @DisplayName("TC1.5 - threeCharactersAllowedInGroupName")
     void threeCharactersAllowedInGroupName() {
         receiveLineWithTimeout(in);//info message
-        out.println("CONN john");
-        out.flush(); //Login first
-        receiveLineWithTimeout(in); //OK john
-        out.println("CG saxion");
-        out.flush();
+        out.println("CONN john5");
+        receiveLineWithTimeout(in); //OK john5
+        out.println("CG saxion5");
         String serverResponse = receiveLineWithTimeout(in);
-        assertEquals("OK CG saxion", serverResponse);
+        assertEquals("OK CG saxion5", serverResponse);
+        out.println("QUIT");
     }
 
     @Test
@@ -56,12 +62,11 @@ class IntegrationAcceptedGroupName {
     void groupNameAlreadyExist() {
         receiveLineWithTimeout(in); //info message
         out.println("CONN jjj");
-        out.flush(); //Login first
         receiveLineWithTimeout(in); //OK jjj
-        out.println("CG saxion");
-        out.flush();
+        out.println("CG saxion5");
         String serverResponse = receiveLineWithTimeout(in);
         assertTrue(serverResponse.startsWith("ER05"), "Group name already exist: "+serverResponse);
+        out.println("QUIT");
     }
 
     @Test
@@ -69,12 +74,11 @@ class IntegrationAcceptedGroupName {
     void groupNameInvalidFormat() {
         receiveLineWithTimeout(in); //info message
         out.println("CONN fdgd");
-        out.flush(); //Login first
         receiveLineWithTimeout(in); //OK fdgd
         out.println("CG saxion,,");
-        out.flush();
         String serverResponse = receiveLineWithTimeout(in);
         assertTrue(serverResponse.startsWith("ER06"), "Group name has an invalid format: "+serverResponse);
+        out.println("QUIT");
     }
 
     private String receiveLineWithTimeout(BufferedReader reader){

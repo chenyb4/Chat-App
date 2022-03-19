@@ -13,9 +13,9 @@ class IntegrationJoiningAGroup {
 
     private static Properties props = new Properties();
 
-    private Socket s;
-    private BufferedReader in;
-    private PrintWriter out;
+    private static Socket s;
+    private static BufferedReader in;
+    private static PrintWriter out;
 
     private final static int max_delta_allowed_ms = 100;
 
@@ -38,19 +38,23 @@ class IntegrationJoiningAGroup {
         s.close();
     }
 
-
+    @AfterAll
+    static void closeAll() throws IOException {
+        s.close();
+        in.close();
+        out.close();
+    }
 
     @Test
     @DisplayName("TC2.6 - groupNameDoesNotExist")
     void groupNameDoesNotExist() {
         receiveLineWithTimeout(in);//info message
         out.println("CONN john");
-        out.flush(); //Login first
         receiveLineWithTimeout(in); //OK john
-        out.println("JG saxion");
-        out.flush();
+        out.println("JG saxion55");
         String serverResponse = receiveLineWithTimeout(in);
         assertTrue(serverResponse.startsWith("ER07"), "Group name does not exist: "+serverResponse);
+        out.println("QUIT");
     }
 
     @Test
@@ -58,12 +62,11 @@ class IntegrationJoiningAGroup {
     void creatingAGroup() {
         receiveLineWithTimeout(in);//info message
         out.println("CONN jjj");
-        out.flush(); //Login first
         receiveLineWithTimeout(in); //OK john
         out.println("CG saxion");
-        out.flush();
         String serverResponse = receiveLineWithTimeout(in);
         assertEquals("OK CG saxion", serverResponse);
+        out.println("QUIT");
     }
 
     @Test
@@ -71,13 +74,12 @@ class IntegrationJoiningAGroup {
     void joiningAGroup() {
         receiveLineWithTimeout(in);//info message
         out.println("CONN ddgdf");
-        out.flush(); //Login first
         receiveLineWithTimeout(in); //OK ddgdf
         out.println("JG saxion");
-        out.flush();
         //When you create a group you already in the group
         String serverResponse = receiveLineWithTimeout(in);
         assertEquals("OK JG saxion", serverResponse);
+        out.println("QUIT");
     }
 
     @Test
@@ -85,15 +87,13 @@ class IntegrationJoiningAGroup {
     void userAlreadyJoinedTheGroup() {
         receiveLineWithTimeout(in);//info message
         out.println("CONN ddgdff");
-        out.flush(); //Login first
         receiveLineWithTimeout(in); //OK ddgdff
         out.println("CG uni");
-        out.flush();
         receiveLineWithTimeout(in); //OK CG saxion
         out.println("JG uni");
-        out.flush();
         String serverResponse = receiveLineWithTimeout(in);
         assertTrue(serverResponse.startsWith("ER09"), "User already joined this group: "+serverResponse);
+        out.println("QUIT");
     }
 
     private String receiveLineWithTimeout(BufferedReader reader){

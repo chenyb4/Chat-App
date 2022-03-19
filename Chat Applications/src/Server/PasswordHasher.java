@@ -1,5 +1,8 @@
 package Server;
 
+import Server.Data.DataProvider;
+import Server.Model.Client;
+
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
@@ -7,8 +10,15 @@ import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
 
 public class PasswordHasher {
+
+    //Store user's salt in a hashmap to be identified with
+    final static Map<String,byte[]> salts = new HashMap<>();
 
     /**
      * @param password to be hashed
@@ -53,14 +63,12 @@ public class PasswordHasher {
      * @return String as a hash
      */
 
-    public static String toHash(String password) {
-        //Unique salt per user
-        SecureRandom random = new SecureRandom();
-        byte[] salt = new byte[16];
-        //random.nextBytes(salt);
+    public static String toHash(String username,String password) {
+        salts.putIfAbsent(username,getNextSalt());
+        byte[] nextSalt = salts.get(username);
         int iterations = 65536;
         int keyLength = 128;
-        byte[] hashedBytes = hashPassword(password.toCharArray(), salt, iterations, keyLength);
+        byte[] hashedBytes = hashPassword(password.toCharArray(), nextSalt, iterations, keyLength);
         return toHex(hashedBytes);
     }
 
@@ -71,8 +79,21 @@ public class PasswordHasher {
      * @return true if it does match, otherwise false
      */
 
-    public static boolean comparePassword (String password, String inputtedPassword) {
+    public static boolean comparePassword (String password, String username,String inputtedPassword) {
         //Password is already hashed, inputted password is not
-        return password.equals(toHash(inputtedPassword));
+        return password.equals(toHash(username,inputtedPassword));
+    }
+
+    /**
+     * Generate random salt per user
+     * @return salt byte[]
+     */
+
+    public static byte[] getNextSalt() {
+        //Unique salt per user
+        Random secureRandom = new SecureRandom();
+        byte[] salt = new byte[16];
+        secureRandom.nextBytes(salt);
+        return salt;
     }
 }

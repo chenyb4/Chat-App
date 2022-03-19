@@ -13,9 +13,9 @@ class IntegrationQuitingServer {
 
     private static Properties props = new Properties();
 
-    private Socket s;
-    private BufferedReader in;
-    private PrintWriter out;
+    private static Socket s;
+    private static BufferedReader in;
+    private static PrintWriter out;
 
     private final static int max_delta_allowed_ms = 100;
 
@@ -38,15 +38,20 @@ class IntegrationQuitingServer {
         s.close();
     }
 
+    @AfterAll
+    static void closeAll() throws IOException {
+        s.close();
+        in.close();
+        out.close();
+    }
+
     @Test
-    @DisplayName("TC1.1.5 - quitTheServer")
+    @DisplayName("TC1.15 - quitTheServer")
     void quitTheServer() {
         receiveLineWithTimeout(in); //info message
         out.println("CONN myname");
-        out.flush();
         receiveLineWithTimeout(in); //OK myname
         out.println("QUIT");
-        out.flush();
         String serverResponse = receiveLineWithTimeout(in);
         assertEquals("OK Goodbye", serverResponse);
     }

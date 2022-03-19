@@ -13,9 +13,9 @@ class IntegrationLeavingAGroup {
 
     private static Properties props = new Properties();
 
-    private Socket s;
-    private BufferedReader in;
-    private PrintWriter out;
+    private static Socket s;
+    private static BufferedReader in;
+    private static PrintWriter out;
 
     private final static int max_delta_allowed_ms = 100;
 
@@ -33,6 +33,13 @@ class IntegrationLeavingAGroup {
         out = new PrintWriter(s.getOutputStream(), true);
     }
 
+    @AfterAll
+    static void closeAll() throws IOException {
+        s.close();
+        in.close();
+        out.close();
+    }
+
     @AfterEach
     void cleanup() throws IOException {
         s.close();
@@ -43,25 +50,23 @@ class IntegrationLeavingAGroup {
     void loginSucceedsWithOK() {
         receiveLineWithTimeout(in); //info message
         out.println("CONN myname");
-        out.flush();
         String serverResponse = receiveLineWithTimeout(in);
         assertEquals("OK myname", serverResponse);
+        out.println("QUIT");
     }
 
     @Test
-    @DisplayName("TC1.1.3 - LeavingAGroup")
+    @DisplayName("TC1.13 - LeavingAGroup")
     void leavingAGroup() {
         receiveLineWithTimeout(in);//info message
-        out.println("CONN john");
-        out.flush(); //Login first
-        receiveLineWithTimeout(in); //OK john
-        out.println("CG saxion");
-        out.flush();
-        receiveLineWithTimeout(in); //OK CG saxion
-        out.println("LG saxion");
-        out.flush();
+        out.println("CONN john1");
+        receiveLineWithTimeout(in); //OK john1
+        out.println("CG saxion1");
+        receiveLineWithTimeout(in); //OK CG saxion1
+        out.println("LG saxion1");
         String serverResponse = receiveLineWithTimeout(in);
-        assertEquals("OK LG saxion", serverResponse);
+        assertEquals("OK LG saxion1", serverResponse);
+        out.println("QUIT");
     }
 
     private String receiveLineWithTimeout(BufferedReader reader){

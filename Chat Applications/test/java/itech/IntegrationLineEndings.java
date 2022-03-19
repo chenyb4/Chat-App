@@ -13,9 +13,9 @@ class IntegrationLineEndings {
 
     private static Properties props = new Properties();
 
-    private Socket s;
-    private BufferedReader in;
-    private PrintWriter out;
+    private static Socket s;
+    private static BufferedReader in;
+    private static PrintWriter out;
 
     private final static int max_delta_allowed_ms = 1000;
 
@@ -38,6 +38,13 @@ class IntegrationLineEndings {
         s.close();
     }
 
+    @AfterAll
+    static void closeAll() throws IOException {
+        s.close();
+        in.close();
+        out.close();
+    }
+
     @Test
     @DisplayName("TC1.3 - windowsLineEndingIsAllowed")
     void windowsLineEndingIsAllowed() {
@@ -48,6 +55,7 @@ class IntegrationLineEndings {
         assertEquals("OK myname", serverResponse);
         serverResponse = receiveLineWithTimeout(in);
         assertEquals("OK BCST a", serverResponse);
+        out.println("QUIT");
     }
 
     @Test
@@ -60,28 +68,24 @@ class IntegrationLineEndings {
         assertEquals("OK mynamee", serverResponse);
         serverResponse = receiveLineWithTimeout(in);
         assertEquals("OK BCST a", serverResponse);
+        out.println("QUIT");
     }
 
     @Test
-    @DisplayName("TC2.1.8 - sendUnknownCommand")
+    @DisplayName("TC2.18 - sendUnknownCommand")
     void sendUnknownCommand() {
         receiveLineWithTimeout(in); //info message
-        out.print("CONN Lukman");
+        out.println("CONN Lukman");
         String serverResponse = receiveLineWithTimeout(in);
         assertEquals("OK Lukman", serverResponse);
-        out.print("dsadsadas");
-        out.flush();
+        out.println("dsadsadas");
         serverResponse = receiveLineWithTimeout(in);
         assertTrue(serverResponse.startsWith("ER00"), "Unknown command: "+serverResponse);
+        out.println("QUIT");
     }
 
     private String receiveLineWithTimeout(BufferedReader reader){
-        try {
-            return  reader.readLine();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
+        return assertTimeoutPreemptively(ofMillis(max_delta_allowed_ms), () -> reader.readLine());
     }
 
 }

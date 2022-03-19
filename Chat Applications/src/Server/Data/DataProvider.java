@@ -10,13 +10,12 @@ public class DataProvider {
 
     public static List<Client> listClients = new LinkedList<>();
 
-    //static will run once the program is started
     static {
         //Passwords stored in hashes
-        listClients.add(new Client("Lukman", PasswordHasher.toHash("123456"))); //123456
-        listClients.add(new Client("Yibing", PasswordHasher.toHash("123456Yc"))); //123456Yc
-        listClients.add(new Client("John", PasswordHasher.toHash("123456J"))); //123456J
-        listClients.add(new Client("Doe", PasswordHasher.toHash("123456D"))); //123456D
+        DataProvider.listClients.add(new Client("Lukman", PasswordHasher.toHash("Lukman","123456"))); //123456
+        DataProvider.listClients.add(new Client("Yibing", PasswordHasher.toHash("Yibing","123456Yc"))); //123456Yc
+        DataProvider.listClients.add(new Client("John", PasswordHasher.toHash("John","123456J"))); //123456J
+        DataProvider.listClients.add(new Client("Doe", PasswordHasher.toHash("Doe","123456D"))); //123456D
     }
 
 }

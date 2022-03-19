@@ -56,7 +56,6 @@ class IntegrationSingleUserTests {
     void loginSucceedsWithOK() {
         receiveLineWithTimeout(in); //info message
         out.println("CONN myname");
-        out.flush();
         String serverResponse = receiveLineWithTimeout(in);
         assertEquals("OK myname", serverResponse);
     }
@@ -66,17 +65,17 @@ class IntegrationSingleUserTests {
     void loginEmptyNameWithER02() {
         receiveLineWithTimeout(in); //info message
         out.println("CONN vv");
-        out.flush();
+        ;
         String serverResponse = receiveLineWithTimeout(in);
         assertEquals("ER02 Username has an invalid format (only characters and numbers are allowed. Space is not allowed)", serverResponse);
     }
 
     @Test
-    @DisplayName("2.2.1 - Bad Weather - loginInvalidCharactersWithER02")
+    @DisplayName("2.2.1 - loginInvalidCharactersWithER02")
     void loginInvalidCharactersWithER02(){
         receiveLineWithTimeout(in); //info message
         out.println("CONN *a*");
-        out.flush();
+        ;
         String serverResponse = receiveLineWithTimeout(in);
         assertEquals("ER02 Username has an invalid format (only characters and numbers are allowed. Space is not allowed)", serverResponse);
     }
@@ -86,9 +85,7 @@ class IntegrationSingleUserTests {
     void pingShouldBeReceivedOnCorrectTime(TestReporter testReporter) {
         receiveLineWithTimeout(in); //info message
         out.println("CONN myname");
-        out.flush();
         receiveLineWithTimeout(in); //server 200 response
-
         //Make sure the test does not hang when no response is received by using assertTimeoutPreemptively
         assertTimeoutPreemptively(ofMillis(ping_time_ms + ping_time_ms_delta_allowed), () -> {
             Instant start = Instant.now();

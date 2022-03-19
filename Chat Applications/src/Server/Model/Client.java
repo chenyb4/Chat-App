@@ -16,6 +16,7 @@ import java.net.Socket;
 import java.security.*;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Client {
 
@@ -24,11 +25,11 @@ public class Client {
     public BufferedReader in;
     private String userName = "";
     private String password = "";
+    private int id = 0;
     private boolean isAuth = false;
     private boolean isConnected = false;
     private boolean receivedPong = false;
     private boolean active = false;
-    private byte[] salt;
 
     //Encryption
     private PrivateKey privateKey;
@@ -42,12 +43,8 @@ public class Client {
     }
 
     public Client(String userName, String password) {
-        SecureRandom random = new SecureRandom();
         this.userName = userName;
         this.password = password;
-        this.salt = new byte[16];
-        //Unique salt per user
-        random.nextBytes(salt);
     }
 
     /**
@@ -211,7 +208,7 @@ public class Client {
             sendMessageToThisClient("ER11 User already authenticated");
         }
         //Compare given password with the password provided
-        else if (!PasswordHasher.comparePassword(client.password,password)) {
+        else if (!PasswordHasher.comparePassword(client.password,client.userName,password)) {
             sendMessageToThisClient("ER18 Incorrect password");
         } else {
             this.isAuth = true;
@@ -287,6 +284,10 @@ public class Client {
 
     public boolean isReceivedPong() {
         return receivedPong;
+    }
+
+    public int getId() {
+        return id;
     }
 
     //Setters

@@ -14,9 +14,9 @@ class IntegrationPacketBreakup {
 
     private static Properties props = new Properties();
 
-    private Socket s;
-    private BufferedReader in;
-    private PrintWriter out;
+    private static Socket s;
+    private static BufferedReader in;
+    private static PrintWriter out;
 
     private final static int max_delta_allowed_ms = 100;
 
@@ -39,8 +39,15 @@ class IntegrationPacketBreakup {
         s.close();
     }
 
+    @AfterAll
+    static void closeAll() throws IOException {
+        s.close();
+        in.close();
+        out.close();
+    }
+
     @Test
-    @DisplayName("TC1.1.2 - flushingMultipleTimesIsAllowed")
+    @DisplayName("TC1.12 - flushingMultipleTimesIsAllowed")
     void flushingMultipleTimesIsAllowed() {
         receiveLineWithTimeout(in); //info message
         out.print("CONN m");
@@ -53,6 +60,7 @@ class IntegrationPacketBreakup {
         assertEquals("OK myname", serverResponse);
         serverResponse = receiveLineWithTimeout(in);
         assertEquals("OK BCST a", serverResponse);
+        out.println("QUIT");
     }
 
     private String receiveLineWithTimeout(BufferedReader reader){

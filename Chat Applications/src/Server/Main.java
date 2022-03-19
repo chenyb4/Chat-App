@@ -1,8 +1,6 @@
 package Server;
 
-import Server.Data.DataProvider;
 import Server.Model.Server;
-
 import java.io.IOException;
 
 public class Main {
@@ -14,7 +12,7 @@ public class Main {
             server.start(port);
         } catch (IOException ioe) {
             System.err.println(ioe.getMessage());
-            System.err.println("Error is starting server");
+            System.err.println("Error in starting server");
         }
 
     }
