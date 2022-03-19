@@ -25,7 +25,6 @@ public class Client {
     public BufferedReader in;
     private String userName = "";
     private String password = "";
-    private int id = 0;
     private boolean isAuth = false;
     private boolean isConnected = false;
     private boolean receivedPong = false;
@@ -284,10 +283,6 @@ public class Client {
 
     public boolean isReceivedPong() {
         return receivedPong;
-    }
-
-    public int getId() {
-        return id;
     }
 
     //Setters

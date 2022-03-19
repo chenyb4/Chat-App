@@ -2,7 +2,6 @@ package Server.Model;
 
 import Server.FileTransfer.FileServer;
 import Server.FileTransfer.Transfer;
-import Server.PasswordHasher;
 
 import java.net.*;
 import java.io.*;
