@@ -17,7 +17,7 @@ public class Server {
     private Socket clientSocket;
     private final List<Client> clients = new LinkedList<>();
     private final List<Group> groups = new LinkedList<>();
-    private final boolean SHOULD_PING = false;
+    private final boolean SHOULD_PING = true;
     private final ServerHandler serverHandler = new ServerHandler();
 
     //File transfer
@@ -82,20 +82,17 @@ public class Server {
             client.initializeStreams();
             clients.add(client);
             sendMessageToClient(client,"INFO welcome to chat room");
-            try {
-                while (true){
-                    String temp = client.in.readLine();
-                    if (temp != null) {
+            while (true){
+                try {
+                    String temp;
+                    while((temp = client.in.readLine()) != null && !temp.equals("")) {
                         clientInput(client,temp);
-                    } else {
-                        clientDisconnection(client);
-                        break;
                     }
+                } catch (IOException e) {
+                    clientDisconnection(client);
+                    break;
                 }
-            } catch (IOException io) {
-                clientDisconnection(client);
             }
-
         }).start();
     }
 

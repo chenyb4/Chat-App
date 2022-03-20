@@ -29,7 +29,7 @@ public class Client {
     private PublicKey publicKey;
     private PrivateKey privateKey;
     //<Username as key, Session key as value>
-    private Map<String,SecretKey> sessionKeys = new HashMap<>();
+    private final Map<String,SecretKey> sessionKeys = new HashMap<>();
 
     //Constructor
     public Client() {
@@ -185,7 +185,7 @@ public class Client {
             String sessionKey;
             try {
                 //OK RSS <C2 username> <encrypted session key>
-                String[] split = in.readLine().split(" ");
+                String[] split = this.in.readLine().split(" ");
                 if (split[0].equals("ER04")){
                     System.err.println("The user does not exist.");
                 } else if (split[0].equals("ER13")) {
@@ -194,7 +194,7 @@ public class Client {
                     //session key on the third index
                     sessionKey = split[3];
                     //Decrypt the session key with my private key
-                    String decryptedSessionKey = MessageEncryptor.decrypt(privateKey,sessionKey);
+                    String decryptedSessionKey = MessageEncryptor.decrypt(this.privateKey,sessionKey);
                     byte[] decodedKey = MessageEncryptor.decode(decryptedSessionKey);
                     //Turn the String to its original form which is the secret key
                     return new SecretKeySpec(decodedKey, 0, 32, "AES");
@@ -214,7 +214,6 @@ public class Client {
      */
 
     public void sendEncryptedPrivateMessage (String username,String msg) {
-        checkLogin();
         if (!sessionKeys.containsKey(username)){
             //Allow requesting session key only once
             SecretKey key = sendSessionKeyRequest(username);
@@ -382,10 +381,6 @@ public class Client {
 
     public boolean isConnected() {
         return isConnected;
-    }
-
-    public Socket getClientSocket() {
-        return clientSocket;
     }
 
     //Setters

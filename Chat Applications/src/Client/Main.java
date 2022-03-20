@@ -8,7 +8,7 @@ import java.io.IOException;
 
 public class Main {
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         Client client  = new Client();
         String ip = "127.0.0.1";
         int port = 1337;
@@ -31,8 +31,7 @@ public class Main {
         clientHandler.startThreadForReadingMessages();
         //Thread for sending Messages to the server
         clientHandler.startThreadForSendingMessages();
-        Thread.sleep(100);
-        System.out.println();
-        UserInterface.menu();
+        //Checks for server errors
+        clientHandler.checkForServerErrors();
     }
 }
