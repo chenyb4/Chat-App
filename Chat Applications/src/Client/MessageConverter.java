@@ -13,13 +13,10 @@ public class MessageConverter {
             return "(message not sent)";
         }
 
-        if (m.equals("PING")){
-            client.sendPong();
-        }
+        if (m.equals("PING")) client.sendPong();
 
-        if (m.contains("INFO")){
-            return "Welcome to the chat server!";
-        }
+        if (m.contains("INFO")) return "Welcome to the chat server!";
+
         // if it is not the case of message not sent, then we care be sure that
         //we can separate the message by space and analyze the parts
         String[] lineParts=m.split(" ");
@@ -120,10 +117,10 @@ public class MessageConverter {
             case "ER00" -> { return "There is no such command. Please enter '?' to see the manual.";}
         }
 
-        return "";
+        return null;
     }
 
-    public static void setClient (Client c) {
-        client = c;
+    public static void setClient(Client client) {
+        MessageConverter.client = client;
     }
 }

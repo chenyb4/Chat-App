@@ -219,6 +219,7 @@ public class MessageProcessor {
             case "LG"->{return "You have left the group.";}
             //termination
             case "Goodbye" -> {return "You have exited the chat room.";}
+            case "RSS" -> {return null;}
             default -> {
                 //logged in
                 String name=lineParts[1];
